@@ -1,2 +1,8 @@
+
 # RTL Files
-This folder contains synthesizable Verilog RTL modules for alarm clock design.
+
+This folder contains all synthesizable Verilog RTL modules used in the Alarm Clock design.
+The design is modularized into six RTL blocks, each handling a specific functionality such as timing generation, time counting, alarm configuration, and control logic.
+Each module is written following good RTL coding practices and is intended to be reusable and easy to integrate.
+All modules are instantiated and interconnected in the top-level alarm clock module.
+
