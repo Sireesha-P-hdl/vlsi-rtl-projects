@@ -1,13 +1,15 @@
-// 8-bit priority encoder using casez
-// Reports the position of the least significant '1' bit.
-// If no bits are high, output position is 0.
-
+//------------------------------------------------------------------------------
+// Module: priority_encoder_8bit
+// Description: Encodes the position of the least significant '1' bit
+// in an 8-bit input vector using casez.
+//------------------------------------------------------------------------------
 module priority_encoder_8bit (
     input  [7:0] in,
     output reg [2:0] pos
 );
 
     always @(*) begin
+        pos = 3'd0;
         casez (in)
             8'bzzzzzzz1: pos = 3'd0;
             8'bzzzzzz1z: pos = 3'd1;
@@ -22,3 +24,4 @@ module priority_encoder_8bit (
     end
 
 endmodule
+
