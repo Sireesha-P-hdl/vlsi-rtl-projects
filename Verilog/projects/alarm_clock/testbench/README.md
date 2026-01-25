@@ -1,1 +1,1 @@
-testbench of alarm clock
+This folder contains verification testbenches for the alarm clock design.
