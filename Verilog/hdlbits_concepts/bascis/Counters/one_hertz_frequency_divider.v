@@ -13,7 +13,9 @@ module top_module (
     output OneHertz,      // 1 Hz pulse output
     output [2:0] c_enable // Enable signals for BCD counters
 );
-
+    //Why are they [3:0]?
+    //Because BCD counters count from 0 to 9, and:
+    //0 to 9 needs 4 bits
     // Internal BCD counter outputs
     wire [3:0] q0;  // Units digit (fastest counter)
     wire [3:0] q1;  // Tens digit
