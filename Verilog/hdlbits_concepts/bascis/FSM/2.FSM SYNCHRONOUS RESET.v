@@ -4,10 +4,10 @@
 // SAME LOGIC as Fsm1 but SYNCHRONOUS RESET (reset only on clk edge)
 // ONE-GLANCE LOGIC: in=0 TOGGLES, in=1 HOLDS, reset→B, out=1 in B
 // ┌─────────────────────┐
-// │ State │ in=0 │ in=1 │ out │
-// ├───────┼──────┼──────┼─────┤
-// │  A    │  B   │  A   │  0  │
-// │  B    │  A   │  B   │  1  │
+// │ State │ in=0 │ in=1 │ out│
+// ├───────┼──────┼──────┼────┤
+// │  A    │  B   │  A   │  0 │
+// │  B    │  A   │  B   │  1 │
 // └─────────────────────┘
 // =================================================================
 
