@@ -37,7 +37,7 @@ module top_module (
     // ════════════════ 2️. STATE REGISTER (ASYNC RESET→OFF) ════════════════
     always @(posedge clk, posedge areset) begin
         if (areset)
-            state <= OFF;                  //  FIXED: Reset→OFF (Q=0)
+            state <= OFF;               //  FIXED: Reset→OFF (Q=0)
         else
             state <= next_state;
     end
