@@ -28,7 +28,7 @@ module top_module (
     // ════════════════ 1️ NEXT-STATE LOGIC (COMBINATIONAL) ════════════════
     always @(*) begin
         case (state)
-            A: next_state = in;              // A: in=0→00(A), in=1→01(B) ✨
+            A: next_state = in;              // A: in=0→00(A), in=1→01(B) 
             B: next_state = in ? B : C;      // B: 0→C, 1→B
             C: next_state = in ? D : A;      // C: 0→A, 1→D
             D: next_state = in ? B : C;      // D: 0→C, 1→B
