@@ -11,7 +11,7 @@ module top_module (
 );
 
 parameter A=0, B=1;     // 1-BIT STATES: A=0, B=1
-reg state, next_state;  // CURRENT + NEXT
+reg state, next_state;  // CURRENT+ NEXT
 
 // COMBO: NEXT STATE LOGIC
 always @(*) begin
