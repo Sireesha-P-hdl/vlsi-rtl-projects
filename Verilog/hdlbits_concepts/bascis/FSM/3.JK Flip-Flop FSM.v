@@ -2,7 +2,7 @@
 // HDLBits: JK Flip-Flop FSM (FIXED: Async Reset to OFF)
 // Problem: Classic JK Flip-Flop as 2-state FSM  COMMENT FIXED
 // DIAGRAM: OFF(0) ←j=0/k=1→ ON(1), Reset→OFF ✓
-// =================================================================
+// ================================================================
 //  ONE-GLANCE TRUTH TABLE (STANDARD JK):
 // ┌─────────────────┐
 // │ State │ j │ k │ Next │ out │
@@ -12,7 +12,7 @@
 // │ ON    │ X │ 0 │ ON   │  1  │ Hold
 // │ ON    │ X │ 1 │ OFF  │  0  │ Reset
 // └─────────────────┘
-// =================================================================
+// ================================================================
 
 module top_module (
     input clk,
