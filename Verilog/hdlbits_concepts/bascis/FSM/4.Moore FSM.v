@@ -2,7 +2,7 @@
 // HDLBits: Moore FSM (4-State Combinational Logic Only)
 // Problem: Implement ONLY next_state + output logic (NO state register)
 // Encoding: A=00, B=01, C=10, D=11 | Output: D=1 (others=0)
-// =================================================================
+// ================================================================
 //  STATE TRANSITION TABLE (ONE-GLANCE):
 // ┌──────┬──────┬──────┬─────┐
 // │State │in=0 │in=1 │ out │
@@ -12,7 +12,7 @@
 // │  C   │  A   │  D   │  0  │
 // │  D   │  C   │  B   │  1  │◄─ Output high!
 // └──────┴──────┴──────┴─────┘
-// =================================================================
+// ================================================================
 
 module top_module (
     input in,
