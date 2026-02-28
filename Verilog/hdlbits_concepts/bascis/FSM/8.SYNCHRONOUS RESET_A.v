@@ -17,7 +17,7 @@
 module top_module (
     input clk,
     input in,
-    input reset,            // SYNCHRONOUS reset → State A
+    input reset,         // SYNCHRONOUS reset → State A
     output out
 );
 
