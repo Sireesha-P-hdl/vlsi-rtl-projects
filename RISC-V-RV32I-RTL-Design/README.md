@@ -42,6 +42,8 @@ This project includes:
 - Xilinx Vivado
 - GTKWave / Vivado Waveform Viewer
 - Git and GitHub
+## Note
+This repository is maintained as a personal learning and verification project based on RISC-V RV32I RTL study material and course-guided exercises.
 
 ## Folder Structure
 
