@@ -169,14 +169,8 @@ Higher prediction accuracy
 
 XGBoost achieved the best overall performance and was selected as the final surrogate model.
 
-9. Model Performance Comparison
-Model	ECC R²	CCL R²
-XGBoost	0.8806	0.6554
-Random Forest	0.8470	0.7039
-Gradient Boosting	0.8610	0.6510
-KNN	0.6684	0.5101
 
-Authors
+9.Authors
 
 Sireesha P
 
