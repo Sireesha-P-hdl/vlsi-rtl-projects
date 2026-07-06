@@ -1,0 +1,26 @@
+module mux4_1(
+input [1:0]s,
+input [3:0]i,
+output reg y
+    );
+always @(*) begin
+case(s) 
+2'b00:y=i[0];
+2'b01:y=i[1];
+2'b10:y=i[2];
+2'b11:y=i[3]; 
+default: y=1'bx;
+endcase 
+end
+endmodule
+module mux10_1(
+input [3:0]s,
+input [9:0]i,
+output  y
+    );
+wire y0,y1,y2;
+mux4_1 m0(s[1:0],{i[3],i[2],i[1],i[0]},y0);
+mux4_1 m1(s[1:0],{i[7],i[6],i[5],i[4]},y1);
+mux4_1 m2(s[1:0],{1'b0,1'b0,i[9],i[8]},y2);
+mux4_1 m3(s[3:2],{1'b0,y2,y1,y0},y);
+endmodule
