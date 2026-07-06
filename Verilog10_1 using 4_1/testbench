@@ -1,0 +1,60 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+
+
+
+module mux10_1tb();
+
+
+    reg  [9:0] i;
+    reg  [3:0] s;
+    wire       y;
+
+    integer errors = 0;   // counts how many checks failed
+
+    // Instantiate the DUT (Device Under Test)
+    mux10_1 uut ( .s(s), .i(i), .y(y) );
+
+    // ---------------------------------------------------
+    // Task: apply a select value, wait, then check the output
+    // ---------------------------------------------------
+    task check_mux(input [3:0] sel_val, input integer expected_index);
+        begin
+            s = sel_val;      // drive the select lines
+            #10;               // wait for combinational logic to settle
+
+            if (y !== i[expected_index]) begin
+                $display("FAIL: s=%b  expected y=i[%0d]=%b  got y=%b",
+                          sel_val, expected_index, i[expected_index], y);
+                errors = errors + 1;
+            end else begin
+                $display("PASS: s=%b  y=i[%0d]=%b", sel_val, expected_index, y);
+            end
+        end
+    endtask
+
+    initial begin
+        i = 10'b1010101011;   // fixed input pattern for the whole test
+
+        $display("---- Starting 10:1 MUX Test ----");
+
+        check_mux(4'd0, 0);
+        check_mux(4'd1, 1);
+        check_mux(4'd2, 2);
+        check_mux(4'd3, 3);
+        check_mux(4'd4, 4);
+        check_mux(4'd5, 5);
+        check_mux(4'd6, 6);
+        check_mux(4'd7, 7);
+        check_mux(4'd8, 8);
+        check_mux(4'd9, 9);
+
+        if (errors == 0)
+            $display("---- ALL TESTS PASSED ----");
+        else
+            $display("---- %0d TEST(S) FAILED ----", errors);
+
+        $finish;
+    end
+
+endmodule
