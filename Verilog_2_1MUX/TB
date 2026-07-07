@@ -1,0 +1,21 @@
+`timescale 1ns / 1ps
+module MUX2_1tb();
+reg [1:0]i;
+reg s0;
+wire y;
+MUX_2_1 uut(i,s0,y);
+initial 
+begin
+$monitor ("time=%0t i=%b s0=%b y=%b",$time,i,s0,y);
+#0; i=2'b00;s0=0;
+#10; i=2'b01;s0=0;
+#10; i=2'b10;s0=0;
+#10; i=2'b11;s0=0;
+#10; i=2'b00;s0=1;
+#10; i=2'b01;s0=1;
+#10; i=2'b10;s0=1;
+#10; i=2'b11;s0=1;
+#10;
+$finish;
+end
+endmodule
