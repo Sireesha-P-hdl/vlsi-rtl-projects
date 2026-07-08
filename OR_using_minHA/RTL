@@ -1,0 +1,17 @@
+`timescale 1ns / 1ps
+module H_A(
+input a,
+input b,
+output s,c
+    );
+ assign s=a^b;
+ assign c=a&b;
+endmodule
+module or_using_HA(
+input a,b,
+output s
+);
+wire s1,c1,unusedcarry;
+H_A H1(.a(a), .b(b), .s(s1), .c(c1));
+H_A H2(.a(s1), .b(c1), .s(s), .c(unusedcarry));
+endmodule
