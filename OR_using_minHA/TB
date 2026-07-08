@@ -1,0 +1,17 @@
+`timescale 1ns / 1ps
+module OR_tb();
+reg a;
+reg b;
+wire s;
+or_using_HA uut(a,b,s);
+initial 
+begin
+$monitor("time=%0t a=%b b=%b s=%b (expected=%b) ",$time,a,b,s,a|b);
+a=0;b=0;#10;
+a=0;b=1;#10;
+a=1;b=0;#10;
+a=1;b=1;#10;
+
+$finish();
+end
+endmodule
