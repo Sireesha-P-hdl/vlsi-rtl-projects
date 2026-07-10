@@ -13,6 +13,5 @@ output reg y
     default y= 1'bx;
     endcase
     end
-    
 endmodule
 
