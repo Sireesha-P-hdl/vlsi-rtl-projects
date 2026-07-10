@@ -11,7 +11,7 @@ $monitor("time=%0t i=%b s=%b y=%b",$time,i,s,y);
 #10;i=4'b1010;s=2'b01;
 #10;i=4'b1010;s=2'b10;
 #10;i=4'b1010;s=2'b11;
-
 #10;
 $finish();
+
 end
