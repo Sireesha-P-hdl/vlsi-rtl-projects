@@ -1,0 +1,16 @@
+`timescale 1ns / 1ps
+module count_tb();
+reg clk=0;
+reg reset;
+wire[4:0]dout;
+count uut(clk,reset,dout);
+always #5 clk=~clk;// toggle every 5 time units
+
+    initial begin
+        reset = 1;
+        #10 reset = 0;
+        #100 $finish;
+
+
+end
+endmodule
