@@ -12,7 +12,7 @@ if(reset)
 dout<=5'b11111;
 else if(dout==5'b11100)
 dout<=5'b11111;
-else if(dout<=5'b11111)
+else 
 dout<=dout-1'b1;
 end
 endmodule
