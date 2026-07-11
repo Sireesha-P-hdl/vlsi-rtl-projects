@@ -1,0 +1,18 @@
+///////////////////////////////////////////////
+// count from 11111 to 11100 its a down counter 
+/////////////////////////////////////////////////
+`timescale 1ns / 1ps
+module count(
+input clk,
+input reset,
+output reg[4:0]dout
+    );
+always @(posedge clk)begin
+if(reset)
+dout<=5'b11111;
+else if(dout==5'b11100)
+dout<=5'b11111;
+else if(dout<=5'b11111)
+dout<=dout-1'b1;
+end
+endmodule
