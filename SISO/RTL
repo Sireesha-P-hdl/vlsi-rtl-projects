@@ -1,0 +1,16 @@
+`timescale 1ns / 1ps
+module SISO(
+input clk,
+input clear,
+input sin,
+output sout
+    );
+    reg [31:0]temp;
+    always @(posedge clk or posedge clear)begin
+    if(clear)
+    temp<=32'd0;
+    else
+    temp<={sin,temp[31:1]};
+    end
+    assign sout=temp[0];
+endmodule
