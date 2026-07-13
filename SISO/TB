@@ -1,0 +1,33 @@
+`timescale 1ns / 1ps
+module SISO_tb();
+    reg clk;
+    reg clear;
+    reg sin;
+    wire sout;
+    reg [31:0] pattern;
+    integer i;
+
+    SISO uut (.clk(clk), .clear(clear), .sin(sin), .sout(sout));
+
+    always #5 clk = ~clk;
+
+    initial begin
+        clk     = 0;
+        sin     = 0;
+        clear   = 1;
+        pattern = 32'b1011_0000_0000_0000_0000_0000_0000_0000;  // bit31=1,30=0,29=1,28=1, rest 0
+        #10 clear = 0;
+
+        // Feed in one bit per clock, MSB (bit 31) first
+        for (i = 31; i >= 0; i = i - 1) begin
+            @(posedge clk);
+            sin = pattern[i];
+        end
+
+        // Wait enough cycles for the last bit to shift all the way through
+        #320 $finish;
+    end
+
+    initial
+        $monitor("time=%0t sin=%b sout=%b temp=%b", $time, sin, sout, uut.temp);
+endmodule
