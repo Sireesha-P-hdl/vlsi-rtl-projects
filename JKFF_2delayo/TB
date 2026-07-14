@@ -1,0 +1,65 @@
+`timescale 1ns / 1ps
+module jk_2delaytb();
+
+
+
+
+    // Testbench signals
+    reg  clk;
+    reg  reset;
+    reg  j;
+    reg  k;
+    wire q;
+    wire q1;
+
+    // Instantiate the Unit Under Test (UUT)
+    jk_2delay uut (
+        .clk   (clk),
+        .reset (reset),
+        .j     (j),
+        .k     (k),
+        .q     (q),
+        .q1    (q1)
+    );
+
+
+
+    // Clock: 10ns period
+    initial clk = 0;
+    always #5 clk = ~clk;
+
+
+
+    // Stimulus: exact sequence -> Reset, Set, Hold, Toggle, Toggle, Reset, Hold, Hold
+    initial begin
+        reset = 1; j = 0; k = 0;               // Cycle 1: Reset
+        @(posedge clk); #1;
+
+        reset = 0; j = 1; k = 0;               // Cycle 2: Set
+        @(posedge clk); #1;
+
+        j = 0; k = 0;                          // Cycle 3: Hold
+        @(posedge clk); #1;
+
+        j = 1; k = 1;                          // Cycle 4: Toggle
+        @(posedge clk); #1;
+
+        j = 1; k = 1;                          // Cycle 5: Toggle
+        @(posedge clk); #1;
+
+        j = 0; k = 1;                          // Cycle 6: Reset (t1 via K)
+        @(posedge clk); #1;
+
+        j = 0; k = 0;                          // Cycle 7: Hold
+        @(posedge clk); #1;
+
+        j = 0; k = 0;                          // Cycle 8: Hold
+        @(posedge clk); #1;
+
+        $display("Sequence complete at time %0t", $time);
+        $finish;
+    end
+
+    // Print state after each clock edge
+
+endmodule
