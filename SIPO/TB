@@ -1,0 +1,53 @@
+`timescale 1ns / 1ps
+
+module SIPO_TB();
+
+    reg clk = 0;
+    reg clear;
+    reg sin;
+    wire [31:0] pout;
+
+    SIPO uut (
+        .clk(clk),
+        .clear(clear),
+        .sin(sin),
+        .pout(pout)
+    );
+
+    always #5 clk = ~clk;   // 10 time unit period
+
+    initial begin
+        // 1) apply asynchronous clear first
+        clear = 1;
+        sin   = 0;
+        #10 clear = 0;
+
+        // 2) feed in a known serial sequence, 1 bit per clock cycle
+        //    sequence: 1,0,1,1,0,0,1,0
+        #5  sin = 1;
+        #10 sin = 0;
+        #10 sin = 1;
+        #10 sin = 1;
+        #10 sin = 0;
+        #10 sin = 0;
+        #10 sin = 1;
+        #10 sin = 0;
+
+        // 3) let it keep shifting with sin held low, to watch the
+        //    loaded bits move across the register over time
+        #100;
+
+        // 4) test asynchronous clear mid-shift (not aligned to clock edge)
+        #7  clear = 1;
+        #3  clear = 0;
+
+        #30 $finish;
+    end
+
+    initial
+        $display("time\tclear\tsin\tpout");
+
+    always @(posedge clk or posedge clear)
+        $display("%0t\t%b\t%b\t%h", $time, clear, sin, pout);
+
+endmodule
