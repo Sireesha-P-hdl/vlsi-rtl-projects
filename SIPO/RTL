@@ -1,0 +1,14 @@
+`timescale 1ns / 1ps
+module SIPO(
+input clk,
+input clear,
+input sin,
+output reg[31:0]pout
+    );
+    always@(posedge clk or posedge clear)begin
+    if(clear)
+    pout<=32'd0;
+    else
+    pout<={sin,pout[31:1]};
+    end
+endmodule
