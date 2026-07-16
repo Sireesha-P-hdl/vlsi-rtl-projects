@@ -1,0 +1,22 @@
+`timescale 1ns / 1ps
+module count_tb();
+reg clk=0;
+reg reset;
+reg updown;
+wire [2:0]count;
+count_3bits uut(clk,reset,updown,count);
+always #5 clk=~clk;
+initial begin
+reset  = 0;
+        updown = 1;      // will count up once reset releases
+        #10 reset = 1;   // release reset (idle state = 1, since active-low)
+
+        // 2) count UP: should go 0,1,2,3,4,0,1,... 
+        #70;              // let it run through ~7 clock edges
+
+        // 3) switch to DOWN direction
+        updown = 0;
+        #70;              // should go ...,4,3,2,1,0,4,3,...
+$finish();
+end
+endmodule
