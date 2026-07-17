@@ -1,0 +1,50 @@
+`timescale 1ns / 1ps
+module PIPO_TB();
+reg clk=0;
+reg clear;
+reg load;
+reg[31:0]pin;
+wire [31:0]pout;
+PIPO uut (clk,clear,load,pin,pout);
+always #5 clk=~clk;
+initial begin
+  // 1) apply asynchronous clear first
+        clear = 1;
+        load  = 0;
+        pin   = 32'd0;
+        #10 clear = 0;
+
+        // 2) load a value in parallel
+        #10;
+        pin  = 32'hAAAA_5555;
+        load = 1;
+        #10 load = 0;          // deassert load after 1 clock
+
+        // 3) hold - load=0, pout should stay unchanged even though pin changes
+        pin = 32'hFFFF_0000;
+        #20;
+
+        // 4) load a new value
+        pin  = 32'h1234_5678;
+        load = 1;
+        #10 load = 0;
+
+        // 5) test asynchronous clear mid-operation (not aligned to clock edge)
+        #7 clear = 1;           // assert clear at a non-clock-edge time
+        #3 clear = 0;
+
+        // 6) load again after clear
+        #10;
+        pin  = 32'hDEAD_BEEF;
+        load = 1;
+        #10 load = 0;
+
+        #20 $finish;
+    end
+
+    // print values at every meaningful change
+    initial
+        $monitor("Time=%0t clk=%b clear=%b load=%b pin=%h pout=%h",
+                   $time, clk, clear, load, pin, pout);
+
+endmodule
