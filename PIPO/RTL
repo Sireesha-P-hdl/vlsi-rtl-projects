@@ -1,0 +1,14 @@
+`timescale 1ns / 1ps
+module PIPO(
+input clk,
+input clear,
+input load,
+input [31:0]pin,
+output reg[31:0]pout
+    );
+    always @(posedge clk or posedge clear)begin
+    if(clear)
+    pout<=32'd0;
+    else if(load)
+    pout<=pin;
+    end
