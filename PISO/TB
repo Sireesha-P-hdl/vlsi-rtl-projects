@@ -1,0 +1,58 @@
+`timescale 1ns / 1ps
+module PISO_TB();
+
+    reg clk = 0;
+    reg clear;
+    reg load;
+    reg [31:0] pin;
+    wire sout;
+
+    PISO uut (
+        .clk(clk),
+        .clear(clear),
+        .load(load),
+        .pin(pin),
+        .sout(sout)
+    );
+
+    always #5 clk = ~clk;   // 10 time unit period
+
+    initial begin
+        // time ; clear ; load ; pin ; sout
+        // 1) synchronous clear first
+        clear = 1;
+        load  = 0;
+        pin   = 32'd0;
+        #10;                 // let one clock edge apply the clear
+        clear = 0;
+
+        // 2) parallel load a known pattern
+        pin  = 32'hB4000000;   // top 4 bits = 1011, rest 0 - easy to trace
+        load = 1;
+        #10 load = 0;         // deassert load after 1 clock so shifting begins
+
+        // 3) let it shift for 32+ cycles to see the full serial output
+        #400;
+
+        // 4) apply clear again mid-shift (still synchronous - only clears
+        //    on the NEXT clock edge, not immediately)
+        clear = 1;
+        #10 clear = 0;
+
+        // 5) load a new pattern and shift again
+        #10;
+        pin  = 32'hF0000000;
+        load = 1;
+        #10 load = 0;
+        #300;
+
+        $finish;
+    end
+
+    initial
+        $display("time\tclear\tload\tpin\t\tsout");
+
+    always @(posedge clk)
+        $display("%0t\t%b\t%b\t%h\t%b", $time, clear, load, pin, sout);
+
+endmodule
