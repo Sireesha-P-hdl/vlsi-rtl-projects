@@ -1,0 +1,20 @@
+`timescale 1ns / 1ps
+module PISO(
+input clk,
+input clear,
+input load,
+input [31:0]pin,
+output  sout
+
+    );
+     reg [31:0]temp;
+    always@(posedge clk)begin
+    if(clear)
+    temp<=32'd0;
+    else if(load)
+    temp<=pin;
+    else
+    temp<={1'b0,temp[31:1]};
+    end
+    assign sout=temp[0];
+endmodule
