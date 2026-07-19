@@ -1,0 +1,58 @@
+`timescale 1ns / 1ps
+
+module SR_FF_TB();
+
+    reg clk = 0;
+    reg reset;
+    reg s, r;
+    wire q, q1;
+
+    SR_FF uut (
+        .clk(clk),
+        .reset(reset),
+        .s(s),
+        .r(r),
+        .q(q),
+        .q1(q1)
+    );
+
+    always #5 clk = ~clk;   // 10 unit period
+
+    initial begin
+        // time ; reset ; s ; r ; q ; q1
+        reset = 1; s = 0; r = 0;
+        #10 reset = 0;
+
+        // Set (s=1, r=0) - watch q take 2 cycles to reflect this
+        #10 s = 1; r = 0;
+        #10 s = 0; r = 0;   // hold afterward, so we can clearly see the delayed '1' arrive
+
+        // wait several cycles to observe the 2-cycle-delayed set take effect
+        #40;
+
+        // Reset via r=1 (s=0)
+        #10 s = 0; r = 1;
+        #10 s = 0; r = 0;   // back to hold
+        #40;
+
+        // Test the S=R=1 "hold" case
+        #10 s = 1; r = 1;
+        #10 s = 0; r = 0;
+        #40;
+
+        // Synchronous reset applied mid-sequence
+        #10 s = 1; r = 0;
+        #7  reset = 1;      // deliberately off-edge, since reset here is synchronous
+        #3  reset = 0;
+        #30;
+
+        $finish;
+    end
+
+    initial
+        $display("time\treset\ts\tr\tq\tq1");
+
+    always @(posedge clk)
+        $display("%0t\t%b\t%b\t%b\t%b\t%b", $time, reset, s, r, q, q1);
+
+endmodule
