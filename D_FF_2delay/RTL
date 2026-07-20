@@ -1,0 +1,26 @@
+`timescale 1ns / 1ps
+module D_FF(
+input clk,
+input reset,
+input d, 
+output reg q,
+output q1
+    );
+    reg t1,t2;
+    always @(posedge clk)begin 
+    if(reset)
+    t1<=1'b0;
+    else
+    t1<=d;
+    end
+    always @(posedge clk)begin 
+    if(reset)begin
+    t2<=1'b0;
+    q<=1'b0;
+    end else begin
+    t2<=t1;
+    q<=t2;
+    end
+    end
+    assign q1=~q;
+endmodule
