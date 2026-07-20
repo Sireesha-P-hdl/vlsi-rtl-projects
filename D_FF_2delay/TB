@@ -1,0 +1,52 @@
+`timescale 1ns / 1ps
+module D_FF_tb();
+    reg clk = 0;
+    reg reset;
+    reg d;
+    wire q, q1;
+
+    D_FF uut (
+        .clk(clk),
+        .reset(reset),
+        .d(d),
+        .q(q),
+        .q1(q1)
+    );
+
+    always #5 clk = ~clk;   // 10 unit period
+
+    initial begin
+        // time ; reset ; d ; q ; q1
+        reset = 1; d = 0;
+        #10 reset = 0;
+
+        // apply d=1, then hold, watch q take 2 cycles to follow
+        #10 d = 1;
+        #10 d = 0;   // hold at 0 afterward so the delayed '1' is clearly visible
+        #40;
+
+        // apply d=0 -> already 0, so toggle to 1 again to see a second clean transition
+        #10 d = 1;
+        #10 d = 1;   // hold high this time
+        #40;
+
+        // drop back to 0
+        #10 d = 0;
+        #40;
+
+        // synchronous reset applied mid-sequence (off-edge, to confirm sync behavior)
+        #10 d = 1;
+        #7  reset = 1;
+        #3  reset = 0;
+        #30;
+
+        $finish;
+    end
+
+    initial
+        $display("time\treset\td\tq\tq1");
+
+    always @(posedge clk)
+        $display("%0t\t%b\t%b\t%b\t%b", $time, reset, d, q, q1);
+
+endmodule
