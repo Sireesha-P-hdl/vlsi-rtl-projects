@@ -1,0 +1,36 @@
+`timescale 1ns / 1ps
+module T_FF_tb();
+reg clk=0;
+reg reset;
+reg t;
+wire q;
+wire q1;
+T_FF uut (clk,reset,t,q,q1);
+always #5 clk=~clk;
+initial 
+begin
+ reset = 1; t = 0;
+        #10 reset = 0;
+
+        // hold t=0 first, q should stay at 0
+        #20;
+
+        // now toggle continuously
+        t = 1;
+        #100;   // watch q toggle every edge, starting 2 cycles late
+
+        // hold t=0 again, q should freeze at whatever it last was
+        t = 0;
+        #40;
+
+        // synchronous reset mid-sequence (off-edge, confirms sync behavior)
+        t = 1;
+        #7  reset = 1;
+        #3  reset = 0;
+        #30;
+
+        $finish;
+    end
+
+    
+endmodule
