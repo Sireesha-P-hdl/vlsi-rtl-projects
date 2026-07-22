@@ -1,0 +1,19 @@
+`timescale 1ns / 1ps
+module odd_gen(
+input clk,
+input reset,
+input t,
+output reg q,
+output  z
+    );
+
+always @(posedge clk)begin
+if(reset)
+q<=1'b0;
+else if(t)
+q<=~q;
+else
+q<=q;
+end
+assign z=clk&q;
+endmodule
