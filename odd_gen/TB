@@ -1,0 +1,64 @@
+`timescale 1ns / 1ps
+module odd_gen_tb;
+
+    // Inputs
+    reg clk;
+    reg reset;
+    reg t;
+
+    // Outputs
+    wire q;
+    wire z;
+
+    // Instantiate the DUT
+    odd_gen uut (
+        .clk(clk),
+        .reset(reset),
+        .t(t),
+        .q(q),
+        .z(z)
+    );
+
+    // Clock Generation
+    initial begin
+        clk = 0;
+        forever #5 clk = ~clk;   // 10 ns clock period
+    end
+
+    // Stimulus
+    initial begin
+        // Initialize inputs
+        reset = 1;
+        t = 1;
+
+        // Apply reset
+        #10;
+        reset = 0;
+
+        // Toggle for a few clock cycles
+        #60;
+
+        // Hold the output (T = 0)
+        t = 0;
+        #40;
+
+        // Toggle again
+        t = 1;
+        #40;
+
+        // Apply reset again
+        reset = 1;
+        #10;
+        reset = 0;
+
+        #40;
+        $finish;
+    end
+
+    // Monitor outputs
+    initial begin
+        $monitor("Time=%0t clk=%b reset=%b t=%b q=%b z=%b",
+                 $time, clk, reset, t, q, z);
+    end
+
+endmodule
