@@ -1,0 +1,26 @@
+`timescale 1ns / 1ps
+// | **A** | **B** | **Bin** | **Difference (D)** | **Borrow (Bout)** |
+//| :---: | :---: | :-----: | :----------------: | :---------------: |
+//|   0   |   0   |    0    |          0         |         0         |
+//|   0   |   0   |    1    |          1         |         1         |
+//|   0   |   1   |    0    |          1         |         1         |
+//|   0   |   1   |    1    |          0         |         1         |
+//|   1   |   0   |    0    |          1         |         0         |
+//|   1   |   0   |    1    |          0         |         0         |
+//|   1   |   1   |    0    |          0         |         0         |
+//|   1   |   1   |    1    |          1         |         1         |
+
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module FS(
+input a,b,Bin,
+output D,Bout
+    );
+    assign D=a^b^Bin;
+    //assig Bout=(~a&b)+(b&Bin)+(~a&Bin); minimization using k map
+    assign Bout=(~a&b)|~(a^b)&Bin; // minimization using boolean algebra
+     //assign Bout=(Bin&b)|~a&(Bin^b);
+      //assign Bout=(~a&Bin)|~(a^Bin)&b;
+       
+endmodule
