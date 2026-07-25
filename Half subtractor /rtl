@@ -1,0 +1,19 @@
+`timescale 1ns / 1ps
+// Additional Comments:
+// a b dif bo
+// 0  0 0   0
+// 0  1 1   1 here small to big subtraction so we are taking the borrow 2^1=2 2-1 1 and broww 1
+// 1  0 1   0
+// 1  1 0   0
+
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module HA(
+input a,
+input b,
+output D,
+output B
+    );
+  assign D= a^b;
+  assign B = ~a& b;
