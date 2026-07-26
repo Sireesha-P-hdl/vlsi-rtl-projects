@@ -1,0 +1,30 @@
+`timescale 1ns / 1ps
+module FA(
+input A,B,Cin,
+output s,c 
+);
+assign s=A^B^Cin;
+assign c=A&B | B&Cin | Cin&A;
+endmodule
+
+module RCA#(parameter N=4)
+(
+input [N-1:0]A,
+input [N-1:0]B,
+input Cin,
+output [N-1:0]s,
+output cout
+    );
+    wire [N-1:0]carry;
+    genvar g;
+    FA f0(A[0],B[0],Cin,s[0],carry[0]);
+    generate
+    for(g=1;g<N;g=g+1)begin : fa_gen
+    
+    FA fa(A[g],B[g],carry[g-1],s[g],carry[g]);
+    end 
+    endgenerate
+    assign cout=carry[N-1];
+    
+    
+endmodule
