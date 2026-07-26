@@ -1,0 +1,55 @@
+`timescale 1ns / 1ps
+
+module tb_RCA;
+
+    parameter N = 4;
+
+    reg  [N-1:0] A, B;
+    reg          Cin;
+    wire [N-1:0] s;
+    wire         cout;
+
+    // Instantiate the RCA using named port mapping
+    RCA #(.N(N)) uut (
+        .A(A),
+        .B(B),
+        .Cin(Cin),
+        .s(s),
+        .cout(cout)
+    );
+
+    integer i;
+
+    initial begin
+        $display("A\tB\tCin\tSum\tCout\tExpected_Sum\tExpected_Cout");
+        $display("--------------------------------------------------------------");
+
+        // Directed test cases
+        A = 4'b0000; B = 4'b0000; Cin = 0; #10; print_result;
+        A = 4'b0001; B = 4'b0001; Cin = 0; #10; print_result;
+        A = 4'b1111; B = 4'b0001; Cin = 0; #10; print_result;
+        A = 4'b1111; B = 4'b1111; Cin = 1; #10; print_result;
+        A = 4'b1010; B = 4'b0101; Cin = 0; #10; print_result;
+        A = 4'b1100; B = 4'b0011; Cin = 1; #10; print_result;
+
+        // Randomized test cases
+        for (i = 0; i < 5; i = i + 1) begin
+            A = $random;
+            B = $random;
+            Cin = $random;
+            #10; print_result;
+        end
+
+        $finish;
+    end
+
+    task print_result;
+        reg [N:0] expected;
+        begin
+            expected = A + B + Cin;
+            $display("%b\t%b\t%b\t%b\t%b\t%b\t\t%b",
+                      A, B, Cin, s, cout, expected[N-1:0], expected[N]);
+        end
+    endtask
+
+endmodule
