@@ -1,0 +1,24 @@
+`timescale 1ns / 1ps
+module CLA_tb();
+    reg [3:0] a, b;
+    reg cin;
+    wire [3:0] s;
+    wire cout;
+
+    CLA uut(.a(a), .b(b), .cin(cin), .s(s), .cout(cout));
+
+    initial begin
+        $display("a\tb\tcin\ts\tcout");
+
+        a=4'd11; b=4'd6; cin=0; #10
+        $display("%0d\t%0d\t%b\t%0d\t%b", a,b,cin,s,cout);
+
+        a=4'd5; b=4'd3; cin=0; #10
+        $display("%0d\t%0d\t%b\t%0d\t%b", a,b,cin,s,cout);
+
+        a=4'd15; b=4'd15; cin=1; #10
+        $display("%0d\t%0d\t%b\t%0d\t%b", a,b,cin,s,cout);
+
+        $finish;
+    end
+endmodule
