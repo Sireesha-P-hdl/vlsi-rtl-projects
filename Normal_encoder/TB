@@ -1,0 +1,17 @@
+`timescale 1ns / 1ps
+module encoder_tb();
+reg [3:0]D;
+wire [1:0]y;
+wire valid;
+encoder uut ( D,y,valid);
+initial 
+begin 
+#10; D=4'b0000; 
+#10; D=4'b0001;
+#10; D=4'b0010;
+#10; D=4'b0100;
+#10; D=4'b1000;
+#80
+$finish();
+end
+endmodule
