@@ -1,0 +1,26 @@
+// run for run 3000ns
+`timescale 1ns / 1ps
+module p_encoder_tb();
+
+    reg  [7:0] D;
+    wire [2:0] y;
+    wire       vaild;
+    integer i;
+
+    P_encoder uut (
+        .D(D),
+        .y(y),
+        .vaild(vaild)
+    );
+
+    initial begin
+        $display("   D\t\ty\tvaild");
+        for (i = 0; i < 256; i = i + 1) begin
+            D = i[7:0];
+            #10;
+            $display("%b\t%b\t%b", D, y, vaild);
+        end
+        $finish;
+    end
+
+endmodule
