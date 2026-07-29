@@ -1,0 +1,24 @@
+// Priority is given to MSB 
+`timescale 1ns / 1ps
+module P_encoder(
+input [7:0]D,
+output reg [2:0]y,
+output vaild
+    );
+    always @(*)
+    begin
+    casex(D)
+    8'b00000000:y=3'bxxx;
+    8'b00000001:y=3'b000;
+    8'b0000001x:y=3'b001;
+    8'b000001xx:y=3'b010;
+    8'b00001xxx:y=3'b011;
+    8'b0001xxxx:y=3'b100;
+    8'b001xxxxx:y=3'b101;
+    8'b01xxxxxx:y=3'b110;
+    8'b1xxxxxxx:y=3'b111;    
+    endcase
+    end
+    assign vaild=D[0]|D[1]|D[2]|D[3]|D[4]|D[5]|D[6]|D[7];
+  
+endmodule
