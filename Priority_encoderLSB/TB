@@ -1,0 +1,47 @@
+`timescale 1ns / 1ps
+module enc_tb();
+
+
+
+    reg  [15:0] D;
+    wire [3:0]  y;
+    wire        valid;
+
+    // Instantiate encoder using named port mapping
+    enc uut (
+        .D(D),
+        .y(y),
+        .valid(valid)
+    );
+
+    integer i;
+
+    initial begin
+        $display("D[15:0]\t\t\ty[3:0]\tvalid");
+        $display("--------------------------------------------------");
+
+        // No input active
+        D = 16'b0000000000000000; #10; print_result();
+
+        // Each single-hot input, one at a time (D0 through D15)
+        for (i = 0; i < 16; i = i + 1) begin
+            D = (16'b1 << i);
+            #10; print_result();
+        end
+
+        // Multi-hot cases - lower bit should win
+        D = 16'b1100000000000000; #10; print_result(); // D15,D14 active -> D14 wins
+        D = 16'b1000000000000001; #10; print_result(); // D15,D0 active  -> D0 wins
+        D = 16'b0000000000000011; #10; print_result(); // D1,D0 active   -> D0 wins
+        D = 16'b1010101010101010; #10; print_result(); // many active   -> lowest set bit wins
+
+        $finish;
+    end
+
+    task print_result();
+        begin
+            $display("%b\t%b\t%b", D, y, valid);
+        end
+    endtask
+
+endmodule
