@@ -110,4 +110,59 @@ All figures measured after full synthesis + place-and-route, via `report_timing`
 | 4:1 | 8 | 14 | 6.053 ns | 3.343 / 2.710 | 3 | 2.096 ns | 0.550 W |
 | 8:1 | 15 | 26 | 6.441 ns | 3.665 / 2.776 | 4 | 2.194 ns | 0.661 W |
 | 16:1 | 28 | 48 | 6.979 ns | 3.811 / 3.169 | 5 | 2.316 ns | 0.805 W |
+## Registered measurement — isolating logic delay
 
+The unregistered results above run pad-to-pad and are dominated by IBUF/OBUF
+delay. To measure the mux logic in isolation, each design was wrapped in input
+and output registers and constrained with a 100 MHz clock:
+
+```tcl
+create_clock -period 10.000 -name clk [get_ports clk]
+```
+
+The reported path becomes flop-to-flop (`I_r_reg[n]/C → y_reg/D`) with no pad
+delay included.
+
+| Design | Levels | Data path delay | Logic | Net | Hold slack | Hold path delay |
+|---|---|---|---|---|---|---|
+| 2:1 | 1 | 1.096 ns | 0.538 | 0.558 | +0.183 ns | 0.303 ns |
+| 4:1 | 1 | 1.594 ns | 0.630 | 0.964 | +0.108 ns | 0.241 ns |
+| 8:1 | 2 | 1.494 ns | 0.711 | 0.783 | +0.158 ns | 0.305 ns |
+| 16:1 | 3 | 1.732 ns | 0.785 | 0.947 | +0.239 ns | 0.388 ns |
+
+Setup slack: 8:1 = +8.547 ns, 16:1 = +8.309 ns against a 10 ns requirement.
+All designs meet both setup and hold.
+
+### Pad-to-pad vs flop-to-flop
+
+| Design | Unregistered | Registered | I/O share |
+|---|---|---|---|
+| 2:1 | 5.988 ns | 1.096 ns | 82% |
+| 4:1 | 6.053 ns | 1.594 ns | 74% |
+| 8:1 | 6.441 ns | 1.494 ns | 77% |
+| 16:1 | 6.979 ns | 1.732 ns | 75% |
+
+**Roughly three quarters of every unregistered measurement was I/O buffer and
+pad routing, not mux logic.** The original table was measuring the pads.
+
+### Findings from the clean data
+
+**Logic levels confirm the LUT6 mapping.** The 2:1 and 4:1 both resolve to a
+single logic level — one 6-input LUT, since a 4:1 mux needs exactly 6 inputs.
+The 8:1 requires two levels (LUT6 → MUXF7) and the 16:1 three
+(LUT6 → MUXF7 → MUXF8). This step pattern was invisible in the unregistered
+data, buried under ~5 ns of constant pad delay.
+
+**Logic delay scales monotonically:** 0.538 → 0.630 → 0.711 → 0.785 ns.
+
+**Total delay does not.** The 4:1's total (1.594 ns) exceeds the 8:1's
+(1.494 ns) because its net delay landed at 0.964 ns versus 0.783 ns. With
+designs this small and no placement constraints, routing variation between
+runs is larger than the genuine logic difference between adjacent mux widths.
+Comparing total delay alone would give the wrong ordering; the logic delay
+column is the meaningful one here.
+
+**Hold margins are small and roughly constant** (+0.108 to +0.239 ns) and do
+not scale with the clock period, since hold depends only on the fastest path
+against the destination flop's requirement plus skew. Reported clock skew
+ranged from 0.000 to 0.015 ns, with clock uncertainty of 0.035 ns.
