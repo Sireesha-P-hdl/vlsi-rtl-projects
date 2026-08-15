@@ -1,0 +1,19 @@
+module Synctb();
+    reg clk = 0;
+    reg reset = 1;
+    reg updown = 1;
+    wire [3:0] q;
+
+    Synup_down uut (.clk(clk), .reset(reset), .updown(updown), .q(q));
+
+    always #5 clk = ~clk;
+
+    initial begin
+        $display("time\treset\tupdown\tQ");
+        $monitor("%0t\t%b\t%b\t%b (%0d)", $time, reset, updown, q, q);
+        #20 reset = 0;
+        #150 updown = 0;
+        #150 $finish;
+    end
+endmodule
+
