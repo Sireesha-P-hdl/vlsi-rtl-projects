@@ -1,0 +1,46 @@
+`timescale 1ns / 1ps
+//Derive a minimal state table for an FSM that acts as a 3 bit parity generator. 
+//For every 3bits observed on the input ′w′ during 3 consecutive cycles, the FSM generates the parityp=1 if and only if the no. of 1s is odd.
+//11 states so 4 bit 
+module odd_parity(
+input clk,reset,w,
+output z
+    );
+    //parameter here is being used as a named 
+    //constant - it gives each state a readable name instead of a raw number.
+   parameter idle=4'b0000;
+   parameter s0=4'b0001;
+   parameter s1=4'b0010;
+   parameter s00=4'b0011;
+   parameter s01=4'b0100;
+   parameter s10=4'b0101;
+   parameter s11=4'b0110;
+   parameter s001=4'b0111;
+   parameter s010=4'b1000;
+   parameter s100=4'b1001;
+   parameter s111=4'b1010;
+   reg [3:0]state ,ns;
+   always@(posedge clk)begin
+   if(reset)
+   state<=idle;
+   else 
+   state<=ns;
+  end
+  always @(*)begin
+  ns=idle;
+   case(state)
+   idle :ns=w?s1:s0;
+   s0 :ns=w?s01:s00;
+   s1 :ns=w?s11:s10;
+   s00 :ns=w?s001:s00;
+   s01 :ns=w?s11:s010;
+   s10 :ns=w?s01:s100;
+   s11 :ns=w?s111:s10;
+   s001 :ns=w?s11:s010;
+   s010 :ns=w?s01:s100;
+   s100 :ns=w?s001:s00;
+   s111 :ns=w?s111:s10;
+   endcase
+     end
+     assign z=(state==s001|state==s010|state==s100|state==s111)?1'b1:1'b0;
+endmodule
