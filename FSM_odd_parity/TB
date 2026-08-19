@@ -1,0 +1,100 @@
+`timescale 1ns / 1ps
+
+module odd_parity_tb;
+
+    reg clk = 1'b0;
+    reg reset;
+    reg w;
+
+    wire z;
+
+    reg [2:0] shreg;        // reference: last three bits, shreg[2] oldest
+    integer   bit_count;    // how many bits since reset
+    integer   errors;
+    integer   i;
+
+    wire ref_z = ^shreg;    // XOR reduction = odd parity
+
+    odd_parity DUT (
+        .clk   (clk),
+        .reset (reset),
+        .w     (w),
+        .z     (z)
+    );
+
+    always #5 clk = ~clk;
+
+    //------------------------------------------------------------------
+    // Reference model, clocked the same as the DUT
+    //------------------------------------------------------------------
+    always @(posedge clk) begin
+        if (reset) begin
+            shreg     <= 3'b000;
+            bit_count <= 0;
+        end
+        else begin
+            shreg     <= {shreg[1:0], w};
+            bit_count <= bit_count + 1;
+        end
+    end
+
+    //------------------------------------------------------------------
+    // Drive one bit and check the result
+    //------------------------------------------------------------------
+    task send(input bit_in);
+        begin
+            @(negedge clk);
+            w = bit_in;
+            @(negedge clk);          // let the state settle
+            if (bit_count >= 3) begin
+                if (z !== ref_z) begin
+                    $display("FAIL  bit=%b  window=%b  z=%b  expected=%b",
+                              w, shreg, z, ref_z);
+                    errors = errors + 1;
+                end
+                else
+                    $display("ok    bit=%b  window=%b  z=%b", w, shreg, z);
+            end
+            else
+                $display("      bit=%b  window=%b  (filling)", w, shreg);
+        end
+    endtask
+
+    //------------------------------------------------------------------
+    initial begin
+        errors = 0;
+        w      = 1'b0;
+        reset  = 1'b1;
+        repeat (2) @(negedge clk);
+        reset  = 1'b0;
+
+        $display("---- directed stream: 0 0 1 0 0 1 1 1 ----");
+        send(0); send(0); send(1); send(0);
+        send(0); send(1); send(1); send(1);
+
+        $display("\n---- all eight 3-bit windows, walked in order ----");
+        // 000 001 010 011 100 101 110 111
+        send(0); send(0); send(0);   // 000  even
+        send(1);                     // 001  odd
+        send(0);                     // 010  odd
+        send(1);                     // 101  even
+        send(1);                     // 011  even
+        send(1);                     // 111  odd
+        send(0);                     // 110  even
+        send(0);                     // 100  odd
+        send(0);                     // 000  even
+
+        $display("\n---- 200 random bits ----");
+        for (i = 0; i < 200; i = i + 1)
+            send($random);
+
+        $display("\n---- Summary ----");
+        if (errors == 0)
+            $display("ALL CHECKS PASSED");
+        else
+            $display("%0d FAILURES", errors);
+
+        $finish;
+    end
+
+endmodule
