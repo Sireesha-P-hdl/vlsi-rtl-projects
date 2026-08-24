@@ -1,0 +1,29 @@
+
+`timescale 1ns / 1ps
+module Mem( clk,rst,wr_enb,rd_enb,wr_addr,rd_addr,din,dout);
+parameter ram_width=8;
+parameter ram_depth=16;
+parameter addr=4;
+input clk,rst,wr_enb,rd_enb;
+input [ram_width-1:0]din;
+input [addr-1:0] wr_addr,rd_addr;
+output reg [ram_width-1:0]dout;
+reg [ram_width-1:0]mem[ram_depth-1:0];
+integer i;
+always @(posedge clk)
+begin
+if(rst)
+begin
+for(i=0;i<ram_depth;i=i+1)
+mem[i]<=0;
+dout<=0;
+end
+else
+begin
+if(wr_enb)
+mem[wr_addr]<=din;
+if(rd_enb)
+dout<=mem[rd_addr];
+end
+end
+endmodule
