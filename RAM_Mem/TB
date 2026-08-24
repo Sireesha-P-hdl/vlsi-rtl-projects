@@ -1,0 +1,50 @@
+`timescale 1ns / 1ps
+
+module Mem_tb;
+
+    reg        clk = 0;
+    reg        rst, wr_enb, rd_enb;
+    reg  [3:0] wr_addr, rd_addr;
+    reg  [7:0] din;
+    wire [7:0] dout;
+
+    Mem DUT (.clk(clk), .rst(rst),
+             .wr_enb(wr_enb), .rd_enb(rd_enb),
+             .wr_addr(wr_addr), .rd_addr(rd_addr),
+             .din(din), .dout(dout));
+
+    always #5 clk = ~clk;
+
+    initial begin
+        // reset
+        rst = 1; wr_enb = 0; rd_enb = 0;
+        @(negedge clk);
+        rst = 0;
+
+        // write A5 to address 3
+        @(negedge clk);
+        wr_addr = 3; din = 8'hA5; wr_enb = 1;
+        @(negedge clk);
+        wr_enb = 0;
+
+        // write 7C to address 9
+        wr_addr = 9; din = 8'h7C; wr_enb = 1;
+        @(negedge clk);
+        wr_enb = 0;
+
+        // read address 3
+        rd_addr = 3; rd_enb = 1;
+        @(negedge clk);
+        rd_enb = 0;
+        $display("addr 3 -> %h  (expect A5)", dout);
+
+        // read address 9
+        rd_addr = 9; rd_enb = 1;
+        @(negedge clk);
+        rd_enb = 0;
+        $display("addr 9 -> %h  (expect 7C)", dout);
+
+        $finish;
+    end
+
+endmodule
