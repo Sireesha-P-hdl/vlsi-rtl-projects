@@ -1,0 +1,82 @@
+`timescale 1ns / 1ps
+
+module sync_fifo_tb;
+
+    reg        clk = 0;
+    reg        reset;
+    reg        read_n, write_n;
+    reg  [7:0] data_in;
+    wire [7:0] data_out;
+    wire       full, empty;
+
+    integer i;
+
+   Sync_FIFO uut (.clk(clk), .reset(reset),
+                   .data_in(data_in), .read_n(read_n), .write_n(write_n),
+                   .data_out(data_out), .full(full), .empty(empty));
+
+    always #5 clk = ~clk;
+
+    // write one byte
+    task write(input [7:0] d);
+        begin
+            @(negedge clk);
+            data_in = d; write_n = 0;
+            @(negedge clk);
+            write_n = 1;
+        end
+    endtask
+
+    // read one byte and print it
+    task read;
+        begin
+            @(negedge clk);
+            read_n = 0;
+            @(negedge clk);
+            read_n = 1;
+            $display("read = %h", data_out);
+        end
+    endtask
+
+    initial begin
+        reset = 0; read_n = 1; write_n = 1; data_in = 0;
+        @(negedge clk);
+        reset = 1;
+        $display("after reset: empty=%b full=%b  (expect 1 0)", empty, full);
+
+        // write 3 bytes, read them back
+        $display("\n-- write 3, read 3 --");
+        write(8'hA1);
+        write(8'hB2);
+        write(8'hC3);
+        read;                       // expect A1
+        read;                       // expect B2
+        read;                       // expect C3
+        $display("empty=%b  (expect 1)", empty);
+
+        // fill completely
+        $display("\n-- fill all 16 --");
+        for (i = 0; i < 16; i = i + 1)
+            write(i + 8'h10);
+        $display("full=%b  (expect 1)", full);
+
+        // try to write when full
+        $display("\n-- write when full, should be ignored --");
+        write(8'hFF);
+        $display("full=%b  (expect 1, FF was dropped)", full);
+
+        // drain
+        $display("\n-- read all 16, expect 10 to 1F --");
+        for (i = 0; i < 16; i = i + 1)
+            read;
+        $display("empty=%b  (expect 1)", empty);
+
+        // try to read when empty
+        $display("\n-- read when empty, should be ignored --");
+        read;
+        $display("empty=%b  (expect 1)", empty);
+
+        $finish;
+    end
+
+endmodule
