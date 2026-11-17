@@ -1,0 +1,19 @@
+`timescale 1ns / 1ps
+module ram(
+input clk,rst,wr_en,rd_en,
+input [2:0]add, //8 memory locations
+inout [15:0]data // 16 bit wide 
+    );
+    reg [15:0]mem[7:0];
+    integer i;
+    always @(posedge clk or posedge rst)begin
+    if(rst)
+    for(i=0;i<8;i=i+1)
+    mem[i]<=16'd0;
+    else
+   if(wr_en&&!rd_en)
+    //if(!wr_en&&!rd_en)  //break the circuit here to see if the testbench fails here
+    mem[add]<=data;
+end
+assign data=(!wr_en&&rd_en)?mem[add]:16'dz;
+endmodule
