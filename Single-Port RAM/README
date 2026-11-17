@@ -1,0 +1,45 @@
+# Single-Port RAM (8 x 16-bit) with a Self-Checking Testbench
+
+An 8-location, 16-bit single-port RAM with one shared (inout) data bus and an asynchronous reset, plus a self-checking testbench. Simulated in Xilinx Vivado (behavioral simulation).
+
+## How the RAM works
+
+| wr_en | rd_en | What happens |
+|---|---|---|
+| 1 | 0 | Write: `data` is stored at address `add` on the rising clock edge |
+| 0 | 1 | Read: the stored word appears on `data` straight away (no clock needed) |
+| 0 | 0 | Nothing happens, `data` is high-Z |
+| 1 | 1 | Nothing happens, `data` is high-Z |
+
+`rst` is asynchronous and clears all 8 locations to 0.
+
+## How the testbench works
+
+- Keeps a reference copy of the memory (`mem_cpy`) and compares every read against it.
+- Uses tasks `reset`, `write` and `read`, with clock-relative timing parameters (`cycle`, `thold`, `tsetup`).
+- Test sequence: reset, read all 8 locations (all 0), write all 8 locations with random data, read them back, 20 random writes, read all 8 again, reset, read all 8 (all 0 again).
+- Prints `ok: address N gave XXXX` for each good read, or a failure line with the expected value, and ends with `PASS` or `FAIL: n errors`.
+
+## Results
+
+- The good design ends with `PASS` at 1870 ns, and the `error` counter stays 0 for the whole run.
+- Checking the testbench itself: in `ram.v`, change `wr_en&&!rd_en` to `!wr_en&&!rd_en`. Writes then never happen, and the testbench reports 16 errors (8 reads after the first writes and 8 after the random writes).
+
+## Screenshots
+
+| | |
+|---|---|
+| RTL schematic from Vivado elaboration (8 x 16-bit registers, read mux, tri-state data bus) | ![schematic](screenshots/schematic.png) |
+| Full run of the good design: `error` stays 0 | ![waveform pass](screenshots/waveform_pass.png) |
+| Console of the good design: `PASS` at 1870 ns | ![console pass](screenshots/console_pass.png) |
+| Console with the write logic deliberately broken | ![console fail](screenshots/console_fail.png) |
+| Waveform with the write logic broken: `error` reaches 16 (hex 10) | ![waveform fail](screenshots/waveform_fail.png) |
+
+## Files
+
+- `ram.v` - the RAM
+- `self_tb.v` - the testbench
+
+## How to run
+
+In Vivado, add `ram.v` as a design source and `self_tb.v` as a simulation source, then choose Run Simulation, Run Behavioral Simulation. Vivado stops at 1000 ns by default, so type `run all` in the Tcl Console to reach the end of the test.
