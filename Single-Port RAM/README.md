@@ -61,25 +61,23 @@ For every read it prints `ok: address N gave XXXX`, or a failure line showing th
 
 ## Results
 
+## Results
+
 **The good design: PASS**
 
 The run ends with `PASS` at 1870 ns, and the `error` counter stays at 0 the whole time.
 
-![Full run, error stays 0](screenshots/waveform_pass.png)
+![Console, PASS at 1870 ns](RAM_PASS.png)
 
-![Console, PASS at 1870 ns](screenshots/console_pass.png)
+![Full run, error stays 0](RAM_res.png)
 
 **The deliberately broken design: 16 errors**
 
 A testbench is only trustworthy once you have seen it fail. In `ram.v` I changed `wr_en&&!rd_en` to `!wr_en&&!rd_en`, so writes never happen. The testbench reported 16 errors: 8 on the reads after the first writes and 8 on the reads after the random writes.
 
-![Console, failures reported](screenshots/console_fail.png)
+![Console, failures reported](RAM_fail.png)
 
-![Broken run, error reaches 16](screenshots/waveform_fail.png)
-
-**RTL schematic**
-
-![RTL schematic from Vivado](screenshots/schematic.png)
+![Broken run, error reaches 16](RAM_resu.png)
 
 ## Project structure
 
@@ -87,15 +85,13 @@ A testbench is only trustworthy once you have seen it fail. In `ram.v` I changed
 Single-Port RAM/
 |
 |-- ram.v
-|-- self_tb.v
-|-- screenshots/
-|   |-- schematic.png
-|   |-- waveform_pass.png
-|   |-- console_pass.png
-|   |-- console_fail.png
-|   `-- waveform_fail.png
+|-- Self_checking_testbench.v
+|   |-- RAM_PASS.png
+|   |-- RAM_fail.png
+|   |-- RAM_netlist.png
+|   |-- RAM_res.png
+|   `-- RAM_resu.png
 `-- README.md
-```
 
 ## What I learned
 
