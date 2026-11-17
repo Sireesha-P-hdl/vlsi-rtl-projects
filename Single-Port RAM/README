@@ -15,31 +15,43 @@ The part I found most interesting is that reads and writes share a single data b
 - Self-checking testbench with a reference copy of the memory
 - Deliberate bug test: I broke the write logic on purpose to prove the testbench catches it
 
-## How the RAM works
+### RAM Specification
 
-| wr_en | rd_en | What happens |
-|---|---|---|
-| 1 | 0 | Write: `data` is stored at address `add` on the rising clock edge |
-| 0 | 1 | Read: the stored word appears on `data` right away |
-| 0 | 0 | Nothing happens, and `data` floats (high-Z) |
-| 1 | 1 | Nothing happens, and `data` floats (high-Z) |
+| Field | Description |
+| :--- | :--- |
+| **Memory size** | 8 locations |
+| **Data width** | 16 bits |
+| **Address width** | 3 bits |
+| **Write** | On the rising clock edge, when wr_en = 1 and rd_en = 0 |
+| **Read** | Straight away, with no clock needed, when wr_en = 0 and rd_en = 1 |
+| **Reset** | Asynchronous, clears all 8 locations to 0 |
+| **Data bus** | One shared inout bus, high-Z when the RAM is not driving it |
 
-## Ports
+## Operating Modes
 
-| Port | Direction | Width | Purpose |
-|---|---|---|---|
-| `clk` | input | 1 | Clock for writes |
-| `rst` | input | 1 | Asynchronous reset |
-| `wr_en` | input | 1 | Write enable |
-| `rd_en` | input | 1 | Read enable |
-| `add` | input | 3 | Address (8 locations) |
-| `data` | inout | 16 | Shared data bus |
+| Mode | What happens |
+|---|---|
+| Write (wr_en = 1, rd_en = 0) | data is stored at address add on the rising clock edge |
+| Read (wr_en = 0, rd_en = 1) | The stored word appears on data right away |
+| Idle (wr_en = 0, rd_en = 0) | Nothing happens, data floats (high-Z) |
+| Both high (wr_en = 1, rd_en = 1) | Nothing happens, data floats (high-Z) |
+
+## Port Description
+
+| Port | Description |
+|---|---|
+| clk | Input, 1 bit. Clock, writes happen on its rising edge |
+| rst | Input, 1 bit. Asynchronous reset |
+| wr_en | Input, 1 bit. Write enable |
+| rd_en | Input, 1 bit. Read enable |
+| add | Input, 3 bits. Address of one of the 8 locations |
+| data | Inout, 16 bits. Shared data bus for reads and writes |
 
 Vivado's elaborated (RTL) schematic reports 150 cells, 23 I/O ports and 188 nets. It shows eight 16-bit registers with asynchronous clear, a read multiplexer, and a tri-state buffer on the data bus.
 
 ## How I tested it
 
-The testbench keeps its own copy of what the memory should hold (`mem_cpy`) and compares every read against it. It uses three tasks, `reset`, `write` and `read`, and a `drive` signal so the testbench can put data on the shared bus only while writing.
+The testbench keeps its own copy of what the memory should hold (mem_cpy) and compares every read against it. It uses three tasks, reset, write and read, and a drive signal so the testbench can put data on the shared bus only while writing.
 
 Test sequence:
 
@@ -50,18 +62,23 @@ Test sequence:
 5. Read all 8 again
 6. Reset, then read all 8 (all 0 again)
 
-For every read it prints `ok: address N gave XXXX`, or a failure line showing the value it expected. At the end it prints `PASS` or `FAIL: n errors`.
+For every read it prints "ok: address N gave XXXX", or a failure line showing the value it expected. At the end it prints PASS or "FAIL: n errors".
 
-| Setting | Value |
+## Test Configuration
+
+| Parameter | Value |
 |---|---|
-| Clock period (`cycle`) | 20 ns |
-| Hold time (`thold`) | 5 ns |
-| Setup time (`tsetup`) | 5 ns |
-| Memory | 8 locations x 16 bits |
+| Clock period (cycle) | 20 ns |
+| Hold time (thold) | 5 ns |
+| Setup time (tsetup) | 5 ns |
+| Memory tested | 8 locations x 16 bits |
+| Simulation ends at | 1870 ns |
 
 ## Results
 
-The run ends with `PASS` at 1870 ns, and the `error` counter stays at 0 the whole time.
+**The good design: PASS**
+
+The run ends with PASS at 1870 ns, and the error counter stays at 0 the whole time.
 
 ![Console, PASS at 1870 ns](screenshots/RAM_PASS.png)
 
@@ -69,7 +86,7 @@ The run ends with `PASS` at 1870 ns, and the `error` counter stays at 0 the whol
 
 **The deliberately broken design: 16 errors**
 
-A testbench is only trustworthy once you have seen it fail. In `ram.v` I changed `wr_en&&!rd_en` to `!wr_en&&!rd_en`, so writes never happen. The testbench reported 16 errors: 8 on the reads after the first writes and 8 on the reads after the random writes.
+A testbench is only trustworthy once you have seen it fail. In ram.v I changed wr_en&&!rd_en to !wr_en&&!rd_en, so writes never happen. The testbench reported 16 errors: 8 on the reads after the first writes and 8 on the reads after the random writes.
 
 ![Console, failures reported](screenshots/RAM_fail.png)
 
@@ -86,14 +103,14 @@ Single-Port RAM/
 |   |-- RAM_PASS.png
 |   |-- RAM_fail.png
 |   |-- RAM_res.png
-|   |-- RAM_resu.png
--- README.md
+|   `-- RAM_resu.png
+`-- README.md
 ```
 
 ## What I learned
 
 - How a shared inout bus works: one side drives it while the other leaves it at high-Z.
-- Why asynchronous reset needs `posedge rst` in the sensitivity list.
+- Why asynchronous reset needs posedge rst in the sensitivity list.
 - An early version of my testbench printed PASS even for a broken RAM, because it never counted errors. Breaking the design on purpose is how I found that out, and now I do it for every testbench.
 
 ## What I would add next
@@ -111,7 +128,7 @@ Single-Port RAM/
 
 ## How to run
 
-In Vivado, add `ram.v` as a design source and `self_tb.v` as a simulation source, then choose Run Simulation, Run Behavioral Simulation. Vivado stops at 1000 ns by default, so type `run all` in the Tcl Console to reach the end of the test.
+In Vivado, add ram.v as a design source and self_tb.v as a simulation source, then choose Run Simulation, Run Behavioral Simulation. Vivado stops at 1000 ns by default, so type "run all" in the Tcl Console to reach the end of the test.
 
 ## About me
 
