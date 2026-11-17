@@ -1,0 +1,77 @@
+`timescale 1ns / 1ps
+module self_tb();
+reg clk=0,rst=0,wr_en=0,rd_en=0;
+reg [2:0]add=3'd0; //8 memory locations
+reg [15:0]din;
+reg drive=0;
+wire [15:0] data = drive ? din : 16'bz;
+reg [15:0]mem_cpy[7:0];
+integer i,j,error;
+parameter cycle=20;
+parameter thold=5;
+parameter tsetup=5;
+ram uut (.clk(clk), .rst(rst), .wr_en(wr_en), .rd_en(rd_en), .add(add), .data(data));
+always #(cycle/2)clk=~clk;
+task reset();
+begin 
+@(posedge clk);
+rst<=1'b1;
+#thold;
+rst=1'b0;
+for(j=0;j<8;j=j+1)begin
+mem_cpy[j]=16'd0;
+end 
+#(cycle-thold-tsetup);
+end 
+endtask
+task write(input [2:0]a,input[15:0]d);begin 
+wr_en=1'b1;
+rd_en=1'b0;
+drive=1'b1;
+add=a;
+din=d;
+mem_cpy[a]=d;
+@(posedge clk);
+#thold;
+wr_en=1'b0;
+rd_en=1'b0;
+drive=1'b0;
+#(cycle-thold-tsetup);
+end
+endtask
+task read(input [2:0]ad);begin 
+wr_en=1'b0;
+rd_en=1'b1;
+drive=1'b0;
+add=ad;
+@(posedge clk);
+#thold;
+if(data!==mem_cpy[ad])begin 
+$display("Failaddress %0d gave %h, expected %h",ad,data,mem_cpy[ad]);
+error=error+1;
+end
+else
+$display("ok:   address %0d gave %h",ad,data); 
+#thold;
+rd_en=1'b0;
+#(cycle-thold-tsetup);
+end 
+endtask
+initial $monitor("monitor:address %0d gave %h, expected %h", add, data, mem_cpy[add]);
+initial begin
+    error = 0;
+    #(cycle/2 - tsetup);                                  // the first operation starts Tsetup before the first edge
+    reset;
+    for (i = 0; i < 8; i = i + 1) read(i);                // after reset every location is 0
+    for (i = 0; i < 8; i = i + 1) write(i, $random);      // write every location
+    for (i = 0; i < 8; i = i + 1) read(i);                // read them back
+    repeat (20) write($random, $random);                  // random writes
+    for (i = 0; i < 8; i = i + 1) read(i);                // read everything again
+    reset;
+    for (i = 0; i < 8; i = i + 1) read(i);                // reset clears everything again
+
+    if (error == 0) $display("PASS");
+    else            $display("FAIL: %0d errors", error);
+    $finish;
+end
+endmodule
