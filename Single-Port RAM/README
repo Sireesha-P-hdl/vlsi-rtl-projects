@@ -1,137 +1,423 @@
-# Single-Port RAM with a Self-Checking Testbench (Verilog HDL)
+# Single-Port RAM with Self-Checking Testbench | Verilog HDL
 
-## About this project
+## 📌 Project Overview
 
-I designed an 8 x 16-bit single-port RAM in Verilog and wrote a testbench that checks it on its own and prints PASS or FAIL, so I don't have to read waveforms to know whether it works.
+This project implements an **8 × 16-bit Single-Port RAM (Random Access Memory)** using Verilog HDL and verifies its functionality using a self-checking testbench.
 
-The part I found most interesting is that reads and writes share a single data bus. That means the RAM has to drive the bus only when it is being read and let go of it the rest of the time, so the testbench can use the same wires to write.
+The design uses a shared 16-bit bidirectional (`inout`) data bus for both read and write operations. The RAM drives the data bus during read operations and releases it to high impedance (`Z`) when it is not reading.
 
-## Features
+A self-checking testbench is developed to automatically verify memory operations by comparing the actual RAM output against an independent reference memory. It reports `PASS` or `FAIL` based on the verification results.
 
-- 8 locations, 16 bits each
-- Write on the rising clock edge, read straight away (no clock needed)
-- One shared (inout) data bus that floats (high-Z) when the RAM is not driving it
-- Asynchronous reset that clears all 8 locations
-- Self-checking testbench with a reference copy of the memory
-- Deliberate bug test: I broke the write logic on purpose to prove the testbench catches it
+The project also includes deliberate fault injection by modifying the write logic to demonstrate that the testbench can detect functional errors.
 
-### RAM Specification
+---
 
-| Field | Description |
+## 🚀 Key Features
+
+- 8 memory locations with 16-bit data width.
+- 3-bit address bus.
+- Single-port read and write architecture.
+- Synchronous write operation on the rising clock edge.
+- Asynchronous read operation.
+- Shared bidirectional 16-bit data bus.
+- Tri-state data bus control using high impedance (`Z`).
+- Asynchronous reset to clear all memory locations.
+- Self-checking testbench with reference memory (`mem_cpy`).
+- Randomized write and read verification.
+- Deliberate bug injection to validate testbench effectiveness.
+- Automatic PASS/FAIL reporting.
+
+---
+
+## 📖 Background Theory
+
+### 1. What is RAM?
+
+Random Access Memory (RAM) is a semiconductor memory used to store digital information temporarily.
+
+It allows data to be written into and retrieved from memory locations using address signals.
+
+Each memory location stores a fixed number of bits, and the address bus determines which location is accessed.
+
+### 2. What is Single-Port RAM?
+
+Single-Port RAM uses one common access port for both read and write operations.
+
+The same address interface and data bus are shared between these operations.
+
+In this project:
+- The RAM contains 8 memory locations.
+- Each location stores 16 bits.
+- A single 3-bit address bus selects the memory location.
+- One bidirectional data bus handles both read and write operations.
+
+### 3. Synchronous Write Operation
+
+A synchronous write operation takes place only at the rising edge of the clock.
+
+When `wr_en = 1` and `rd_en = 0`, the data present on the shared bus is stored at the selected memory address.
+
+### 4. Asynchronous Read Operation
+
+An asynchronous read operation does not require a clock edge.
+
+When `wr_en = 0` and `rd_en = 1`, the selected memory location immediately drives its stored data onto the shared data bus.
+
+### 5. Bidirectional Data Bus (inout)
+
+An `inout` port allows a signal to act as both an input and an output.
+
+In this project, the same 16-bit bus is used for writing data into RAM and reading data from RAM.
+
+The RAM drives the bus only during an enabled read operation. During other conditions, the RAM releases the bus using high impedance (`Z`).
+
+This prevents unwanted bus contention between the RAM and the testbench.
+
+### 6. High-Impedance State (Z)
+
+High impedance represents a disconnected or electrically inactive output driver.
+
+When the RAM is not performing a read operation, its output driver is disabled.
+
+This allows the testbench to drive the shared bus during write operations.
+
+---
+
+## ⚙️ RAM Specifications
+
+| Parameter | Description |
 | :--- | :--- |
-| **Memory size** | 8 locations |
-| **Data width** | 16 bits |
-| **Address width** | 3 bits |
-| **Write** | On the rising clock edge, when wr_en = 1 and rd_en = 0 |
-| **Read** | Straight away, with no clock needed, when wr_en = 0 and rd_en = 1 |
-| **Reset** | Asynchronous, clears all 8 locations to 0 |
-| **Data bus** | One shared inout bus, high-Z when the RAM is not driving it |
+| Memory Type | Single-Port RAM |
+| Memory Depth | 8 locations |
+| Data Width | 16 bits |
+| Address Width | 3 bits |
+| Total Capacity | 128 bits |
+| Write Operation | Synchronous |
+| Read Operation | Asynchronous |
+| Reset | Asynchronous |
+| Data Bus | 16-bit bidirectional (`inout`) |
+| Idle Bus State | High impedance (`Z`) |
 
-## Operating Modes
+---
 
-| Mode | What happens |
-|---|---|
-| Write (wr_en = 1, rd_en = 0) | data is stored at address add on the rising clock edge |
-| Read (wr_en = 0, rd_en = 1) | The stored word appears on data right away |
-| Idle (wr_en = 0, rd_en = 0) | Nothing happens, data floats (high-Z) |
-| Both high (wr_en = 1, rd_en = 1) | Nothing happens, data floats (high-Z) |
+## 🔌 Port Description
 
-## Port Description
+| Port | Direction | Width | Description |
+| :--- | :--- | :--- | :--- |
+| `clk` | Input | 1 bit | Clock signal for write operation |
+| `rst` | Input | 1 bit | Asynchronous reset |
+| `wr_en` | Input | 1 bit | Write enable |
+| `rd_en` | Input | 1 bit | Read enable |
+| `add` | Input | 3 bits | Selects one of the 8 memory locations |
+| `data` | Inout | 16 bits | Shared read/write data bus |
 
-| Port | Description |
-|---|---|
-| clk | Input, 1 bit. Clock, writes happen on its rising edge |
-| rst | Input, 1 bit. Asynchronous reset |
-| wr_en | Input, 1 bit. Write enable |
-| rd_en | Input, 1 bit. Read enable |
-| add | Input, 3 bits. Address of one of the 8 locations |
-| data | Inout, 16 bits. Shared data bus for reads and writes |
+---
 
-Vivado's elaborated (RTL) schematic reports 150 cells, 23 I/O ports and 188 nets. It shows eight 16-bit registers with asynchronous clear, a read multiplexer, and a tri-state buffer on the data bus.
+## 🔄 Operating Modes
 
-## How I tested it
+The RAM operates according to the combination of write enable and read enable signals.
 
-The testbench keeps its own copy of what the memory should hold (mem_cpy) and compares every read against it. It uses three tasks, reset, write and read, and a drive signal so the testbench can put data on the shared bus only while writing.
+| Operating Mode | wr_en | rd_en | Function |
+| :--- | :---: | :---: | :--- |
+| Write | 1 | 0 | Stores data at the selected address on the rising clock edge |
+| Read | 0 | 1 | Outputs stored data immediately |
+| Idle | 0 | 0 | No operation; RAM data bus is high-Z |
+| Invalid/Both Enabled | 1 | 1 | No operation; RAM data bus is high-Z |
 
-Test sequence:
+---
 
-1. Reset, then read all 8 locations (all should be 0)
-2. Write all 8 locations with random data
-3. Read all 8 back
-4. 20 random writes
-5. Read all 8 again
-6. Reset, then read all 8 (all 0 again)
+## 🏗️ Design Architecture
 
-For every read it prints "ok: address N gave XXXX", or a failure line showing the value it expected. At the end it prints PASS or "FAIL: n errors".
+The RAM design consists of the following major components:
 
-## Test Configuration
+1. **Memory Array:** Stores 8 words, each containing 16 bits.
+2. **Address Decoder:** Selects the memory location based on the 3-bit address.
+3. **Write Control Logic:** Enables writing at the rising edge of the clock.
+4. **Read Multiplexer:** Selects the stored word corresponding to the input address.
+5. **Tri-State Buffer:** Controls whether the RAM drives the shared data bus.
+6. **Reset Logic:** Clears all memory locations asynchronously.
+
+### RTL Schematic
+
+<!-- Add your Vivado RTL schematic screenshot here -->
+
+![RTL Schematic](screenshots/RAM_RTL_Schematic.png)
+
+*Figure 1: Vivado elaborated RTL schematic of the single-port RAM.*
+
+### Synthesis Information
+
+The Vivado elaborated RTL schematic reports:
+
+| Parameter | Reported Value |
+| :--- | :--- |
+| Cells | 150 |
+| I/O Ports | 23 |
+| Nets | 188 |
+
+The schematic illustrates eight 16-bit memory registers with asynchronous clear, read selection logic, and tri-state bus control.
+
+---
+
+## 🧪 Self-Checking Testbench
+
+A self-checking testbench is developed to verify RAM functionality automatically.
+
+The testbench maintains an independent reference memory named `mem_cpy`, which stores the expected values for each memory location.
+
+During every read operation, the actual RAM output is compared with the corresponding reference memory value.
+
+### Testbench Features
+
+- Independent reference memory.
+- Automatic comparison of expected and actual data.
+- Randomized write operations.
+- Read verification across all memory locations.
+- Error counter to track mismatches.
+- Automatic PASS/FAIL reporting.
+
+### Verification Logic
+
+The testbench performs the following operations:
+
+1. Generates stimulus for the RAM.
+2. Drives data onto the shared bus during writes.
+3. Updates the reference memory.
+4. Reads the selected RAM address.
+5. Compares the actual output against the expected output.
+6. Increments the error counter whenever a mismatch occurs.
+7. Displays the final verification status.
+
+---
+
+## 🔬 Test Sequence
+
+| Step | Operation | Expected Result |
+| :---: | :--- | :--- |
+| 1 | Apply asynchronous reset | All memory locations become zero |
+| 2 | Read all 8 locations | All locations return zero |
+| 3 | Write random data into all 8 locations | Data stored successfully |
+| 4 | Read all 8 locations | Actual data matches reference memory |
+| 5 | Perform 20 random writes | Random data stored successfully |
+| 6 | Read all 8 locations again | Data matches reference memory |
+| 7 | Apply reset again | All memory locations become zero |
+| 8 | Read all 8 locations | All locations return zero |
+
+---
+
+## ⏱️ Test Configuration
 
 | Parameter | Value |
-|---|---|
-| Clock period (cycle) | 20 ns |
-| Hold time (thold) | 5 ns |
-| Setup time (tsetup) | 5 ns |
-| Memory tested | 8 locations x 16 bits |
-| Simulation ends at | 1870 ns |
+| :--- | :--- |
+| Clock Period | 20 ns |
+| Hold Time (`thold`) | 5 ns |
+| Setup Time (`tsetup`) | 5 ns |
+| Memory Tested | 8 × 16 bits |
+| Simulation End Time | 1870 ns |
 
-## Results
+---
 
-**The good design: PASS**
+## 📊 Simulation Results
 
-The run ends with PASS at 1870 ns, and the error counter stays at 0 the whole time.
+### 1. Successful RAM Verification
 
-![Console, PASS at 1870 ns](screenshots/RAM_PASS.png)
+The correctly implemented RAM passes all the verification tests.
 
-![Full run, error stays 0](screenshots/RAM_res.png)
+- All 8 memory locations are checked.
+- Random write operations are performed.
+- Read data matches the reference memory.
+- Error counter remains zero.
+- Simulation reports PASS.
 
-**The deliberately broken design: 16 errors**
+<!-- Add RAM_PASS.png here -->
 
-A testbench is only trustworthy once you have seen it fail. In ram.v I changed wr_en&&!rd_en to !wr_en&&!rd_en, so writes never happen. The testbench reported 16 errors: 8 on the reads after the first writes and 8 on the reads after the random writes.
+![RAM PASS](screenshots/RAM_PASS.png)
 
-![Console, failures reported](screenshots/RAM_fail.png)
+*Figure 2: Simulation console showing successful RAM verification.*
 
-![Broken run, error reaches 16](screenshots/RAM_resu.png)
+<!-- Add RAM_res.png here -->
 
-## Project structure
+![RAM Result](screenshots/RAM_res.png)
 
+*Figure 3: Simulation result showing the error counter remaining at zero.*
+
+### 2. Deliberate Bug Injection
+
+To validate the effectiveness of the self-checking testbench, a deliberate error was introduced into the RAM write condition.
+
+**Original write condition:**
+
+`wr_en && !rd_en`
+
+**Modified faulty write condition:**
+
+`!wr_en && !rd_en`
+
+Due to this modification, the RAM does not perform the intended write operations.
+
+The testbench detects the incorrect memory contents during subsequent read operations.
+
+**Observed Result:**
+- 8 errors after the initial write and read sequence.
+- 8 additional errors after randomized writes.
+- Total errors reported: 16.
+
+<!-- Add RAM_fail.png here -->
+
+![RAM Failure](screenshots/RAM_fail.png)
+
+*Figure 4: Simulation console showing detected failures in the faulty RAM design.*
+
+<!-- Add RAM_resu.png here -->
+
+![RAM Error Count](screenshots/RAM_resu.png)
+
+*Figure 5: Error counter reaching 16 after deliberate fault injection.*
+
+### Results Summary
+
+| Design Condition | Expected Result | Observed Result |
+| :--- | :--- | :--- |
+| Correct RAM | PASS | PASS |
+| Faulty RAM | FAIL | 16 errors detected |
+| Correct RAM Error Count | 0 | 0 |
+| Faulty RAM Error Count | Greater than 0 | 16 |
+
+---
+
+## 📂 Project Structure
+
+```text
+Single-Port-RAM/
+│
+├── ram.v
+│
+├── self_tb.v
+│
+├── screenshots/
+│   ├── RAM_RTL_Schematic.png
+│   ├── RAM_PASS.png
+│   ├── RAM_fail.png
+│   ├── RAM_res.png
+│   └── RAM_resu.png
+│
+└── README.md
 ```
-Single-Port RAM/
-|
-|-- ram.v
-|-- self_tb.v
-|-- screenshots/
-|   |-- RAM_PASS.png
-|   |-- RAM_fail.png
-|   |-- RAM_res.png
-|   `-- RAM_resu.png
-`-- README.md
+
+---
+
+## 🛠️ Tools and Technologies
+
+| Tool | Purpose |
+| :--- | :--- |
+| Verilog HDL | RTL Design |
+| Xilinx Vivado | RTL Elaboration and Simulation |
+| Vivado Simulator | Functional Verification |
+| Tcl Console | Simulation Control |
+| GitHub | Version Control and Project Documentation |
+
+---
+
+## ▶️ How to Run the Project
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/Single-Port-RAM.git
 ```
 
-## What I learned
+### Step 2: Navigate to the Project Directory
 
-- How a shared inout bus works: one side drives it while the other leaves it at high-Z.
-- Why asynchronous reset needs posedge rst in the sensitivity list.
-- An early version of my testbench printed PASS even for a broken RAM, because it never counted errors. Breaking the design on purpose is how I found that out, and now I do it for every testbench.
+```bash
+cd Single-Port-RAM
+```
 
-## What I would add next
+### Step 3: Open Xilinx Vivado
 
-- A check that the bus really floats when the RAM is idle
-- A test for what happens when both enables are high
-- A reset in the middle of an operation
-- Depth and width as parameters
-- Assertions, once I learn SystemVerilog
+Launch Vivado and create a new RTL project.
 
-## Tools used
+### Step 4: Add Design Source
 
-- Verilog HDL
-- Xilinx Vivado (behavioral simulation and RTL schematic)
+Add the following file as a design source:
 
-## How to run
+```text
+ram.v
+```
 
-In Vivado, add ram.v as a design source and self_tb.v as a simulation source, then choose Run Simulation, Run Behavioral Simulation. Vivado stops at 1000 ns by default, so type "run all" in the Tcl Console to reach the end of the test.
+### Step 5: Add Testbench
 
-## About me
+Add the following file as a simulation source:
 
-Sireesha P, B.Tech ECE student at Dayananda Sagar University, Bengaluru (graduating 2027), interested in RTL design and verification.
+```text
+self_tb.v
+```
 
-LinkedIn: https://www.linkedin.com/in/sireesha-p-ec
+### Step 6: Run Behavioral Simulation
+
+Navigate to:
+
+```text
+Flow Navigator → Simulation → Run Simulation → Run Behavioral Simulation
+```
+
+### Step 7: Run Complete Simulation
+
+Vivado may initially stop at 1000 ns.
+
+To execute the complete testbench, enter the following command in the Tcl Console:
+
+```tcl
+run all
+```
+
+### Step 8: Verify Results
+
+Check the simulation console for the final PASS message.
+
+The expected simulation completion time is 1870 ns.
+
+---
+
+## 📚 What I Learned
+
+- Implementing single-port RAM architecture using Verilog HDL.
+- Understanding synchronous write and asynchronous read operations.
+- Working with bidirectional (`inout`) ports.
+- Implementing tri-state logic using high impedance (`Z`).
+- Understanding asynchronous reset implementation.
+- Developing self-checking testbenches using reference memory.
+- Performing randomized memory verification.
+- Debugging RTL through deliberate fault injection.
+- Understanding the importance of verification beyond waveform observation.
+
+---
+
+## 🔮 Future Improvements
+
+- Verify high-impedance behavior during idle conditions.
+- Add explicit verification for simultaneous read and write enable.
+- Test reset during an active memory operation.
+- Make memory depth and data width configurable using parameters.
+- Implement SystemVerilog assertions.
+- Extend the design to dual-port RAM.
+- Explore FPGA memory inference and synthesis optimization.
+
+---
+
+## 👩‍💻 About Me
+
+**Sireesha P**
+
+B.Tech – Electronics and Communication Engineering  
+Dayananda Sagar University, Bengaluru  
+Graduating Batch: 2027
+
+Interested in RTL Design, Digital Electronics, Verilog HDL, and Design Verification.
+
+**LinkedIn:** [Sireesha P](https://www.linkedin.com/in/sireesha-p-ec)
+
+**GitHub:** [Sireesha-P-hdl](https://github.com/Sireesha-P-hdl)
+
+---
+
+*This project demonstrates RTL design and functional verification of a single-port RAM using Verilog HDL, including self-checking verification and deliberate fault injection.*
