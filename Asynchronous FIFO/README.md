@@ -223,16 +223,6 @@ run all
 
 ---
 
-# 🔮 Future Scope
-
-- Depth and width as parameters
-- Almost-full and almost-empty flags
-- A random test with reads and writes happening at the same time
-- Assertions, once I learn SystemVerilog
-- A CDC check with a lint tool
-- FPGA hardware test
-
----
 
 # 👩‍💻 Author
 
