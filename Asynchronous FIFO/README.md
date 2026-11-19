@@ -1,50 +1,50 @@
-# Asynchronous FIFO (16 x 8-bit) in Verilog HDL
+# Asynchronous FIFO (16 × 8-bit) using Verilog HDL
 
 ## 🧠 Project Overview
 
-I designed an **asynchronous FIFO** that moves bytes safely between two clocks that have nothing to do with each other: a **7 ns write clock** and an **11 ns read clock**.
+I designed a 16 × 8-bit asynchronous FIFO using Verilog HDL. It transfers data between two independent clock domains: a 7 ns write clock and an 11 ns read clock.
 
-Storing the data is the easy part. The hard part is letting each side know where the other side's pointer is, without ever catching a half-changed value. That is what **Gray code** and **two-flop synchronizers** are for, and this project is mostly about those two ideas.
+Since the write and read clocks are different, I used Gray-code pointers and two-flop synchronizers to safely transfer pointer information between the two clock domains.
 
----
-
-# 🚀 Key Features
-
-✅ 16 locations x 8 bits
-
-✅ Separate write and read clocks, each with its own active-low reset
-
-✅ 5-bit write and read pointers (4 address bits plus 1 lap bit)
-
-✅ Pointers cross between the clocks in Gray code, through two flip-flops
-
-✅ Registered full and empty flags
-
-✅ Self-checking testbench that follows the pointers step by step
+Through this project, I got practical experience with asynchronous FIFO design, clock domain crossing (CDC), pointer management, and full and empty detection.
 
 ---
 
-# 📖 Background
+## 🚀 Key Features
 
-## Why an asynchronous FIFO?
-
-When one part of a chip runs on one clock and another part runs on a different clock, you cannot pass data straight across. A FIFO with its own write side and read side is the standard way to do it safely.
-
-## Why Gray code?
-
-From one count to the next, Gray code changes exactly one bit. The other clock may sample the pointer right while it is changing, but with only one bit moving it sees either the old value or the new value, never a mix of both.
-
-## Why two flip-flops?
-
-A flip-flop that samples a signal at the wrong moment can go metastable for a short time. Passing the pointer through two flip-flops gives it a full clock cycle to settle before anything uses it.
-
-## Why 5-bit pointers for 16 slots?
-
-Four bits are enough to pick a slot. The fifth bit counts laps around the memory. Without it, "full" and "empty" would look the same, because in both cases the two pointers point at the same slot.
+- 16 memory locations, each storing 8 bits.
+- Separate write and read clocks with independent active-low resets.
+- 5-bit write and read pointers (4 address bits plus 1 lap bit).
+- Gray-code conversion for pointer synchronization.
+- Two-flop synchronizers in both clock domains.
+- Registered full and empty flags.
+- Self-checking testbench to verify FIFO operations.
 
 ---
 
-# 🏗 Design
+## 📖 Background
+
+### Why an asynchronous FIFO?
+
+An asynchronous FIFO is useful when two parts of a design operate using different clocks. It allows data to be written using one clock and read using another.
+
+### Why Gray code?
+
+I used Gray code for pointer synchronization because only one bit changes between consecutive values. This helps reduce the possibility of incorrect pointer information when crossing between clock domains.
+
+### Why two flip-flops?
+
+When signals cross between independent clock domains, metastability can occur. I used two flip-flops in each synchronizer to reduce the possibility of metastability propagating into the FIFO control logic.
+
+### Why 5-bit pointers for 16 locations?
+
+A 16-location FIFO needs 4 bits to address its memory locations. I used one additional bit to keep track of the pointer wraparound.
+
+This extra bit helps distinguish between the full and empty conditions.
+
+---
+
+## 🏗 Design
 
 ### FIFO Specification
 
@@ -56,41 +56,47 @@ Four bits are enough to pick a slot. The fifth bit counts laps around the memory
 | Pointer width | 5 bits (address plus lap bit) |
 | Write clock | 7 ns in the testbench |
 | Read clock | 11 ns in the testbench |
-| Reset | Active-low, one per clock (wrst_n and rrst_n) |
-| Read | rdata always shows the word at the read pointer |
+| Reset | Active-low, one per clock (`wrst_n` and `rrst_n`) |
+| Read | `rdata` always shows the word at the read pointer |
 | Synchronizers | Two flip-flops in each direction |
 
 ### Port Description
 
 | Port | Description |
 |---|---|
-| wclk | Input, 1 bit. Write clock |
-| wrst_n | Input, 1 bit. Write-side reset, active low |
-| winc | Input, 1 bit. Write request |
-| wdata | Input, 8 bits. Data to write |
-| wfull | Output, 1 bit. The FIFO is full, so writes are ignored |
-| rclk | Input, 1 bit. Read clock |
-| rrst_n | Input, 1 bit. Read-side reset, active low |
-| rinc | Input, 1 bit. Read request |
-| rdata | Output, 8 bits. Data at the read pointer |
-| rempty | Output, 1 bit. The FIFO is empty, so there is nothing to read |
+| `wclk` | Input, 1 bit. Write clock |
+| `wrst_n` | Input, 1 bit. Write-side reset, active low |
+| `winc` | Input, 1 bit. Write request |
+| `wdata` | Input, 8 bits. Data to write |
+| `wfull` | Output, 1 bit. Indicates that the FIFO is full |
+| `rclk` | Input, 1 bit. Read clock |
+| `rrst_n` | Input, 1 bit. Read-side reset, active low |
+| `rinc` | Input, 1 bit. Read request |
+| `rdata` | Output, 8 bits. Data at the read pointer |
+| `rempty` | Output, 1 bit. Indicates that the FIFO is empty |
 
 ### Modules
 
-| Module | What it does |
+| Module | Description |
 |---|---|
-| fifo_mem | The 16 x 8-bit memory, written on wclk |
-| sync_w2r | Passes the write pointer to the read side through two flip-flops |
-| sync_r2w | Passes the read pointer to the write side through two flip-flops |
-| wptr_full | The write pointer, its Gray code, and the full flag |
-| rptr_empty | The read pointer, its Gray code, and the empty flag |
-| async_fifo | The top level that connects them all |
+| `fifo_mem` | Stores 16 × 8-bit data |
+| `sync_w2r` | Synchronizes the write pointer into the read clock domain |
+| `sync_r2w` | Synchronizes the read pointer into the write clock domain |
+| `wptr_full` | Handles the write pointer, Gray-code conversion, and full detection |
+| `rptr_empty` | Handles the read pointer, Gray-code conversion, and empty detection |
+| `async_fifo` | Top module that connects all the FIFO blocks |
 
 ---
 
-# 🔄 How the Pointers Work
+## 🔄 How the Pointers Work
 
-Each pointer counts in binary, and the low 4 bits pick the slot. Before crossing to the other clock, the pointer is turned into Gray code with gray = bin ^ (bin >> 1).
+The FIFO uses binary pointers for memory addressing. Before transferring a pointer to the other clock domain, it is converted into Gray code.
+
+The conversion formula is:
+
+`gray = bin ^ (bin >> 1)`
+
+### Binary to Gray Code Conversion
 
 | Pointer | Binary | Gray | Slot |
 |---|---|---|---|
@@ -103,26 +109,38 @@ Each pointer counts in binary, and the low 4 bits pick the slot. Before crossing
 | 16 | 10000 | 11000 | 0 (one lap later) |
 | 19 | 10011 | 11010 | 3 (one lap later) |
 
-### Empty
+### Empty Condition
 
-The FIFO is empty when the read pointer has caught up with the write pointer, so their Gray codes are equal.
+The FIFO is empty when the read pointer catches up with the write pointer.
 
-### Full
+In this design, the empty condition is detected by comparing the read Gray-code pointer with the synchronized write Gray-code pointer.
 
-The FIFO is full when the write pointer is exactly one lap (16) ahead of the read pointer. In Gray code, a pointer 16 ahead has its top two bits flipped and the other three bits the same.
+### Full Condition
+
+The FIFO becomes full when the write pointer is one complete lap ahead of the read pointer.
+
+For a 16-location FIFO, the full condition is detected by comparing the write Gray-code pointer with the synchronized read Gray-code pointer after inverting its top two bits.
 
 | Read pointer | Its Gray code | Top 2 bits flipped | Write pointer that makes it full |
 |---|---|---|---|
 | 0 | 00000 | 11000 | 16 (Gray 11000) |
 | 3 | 00010 | 11010 | 19 (Gray 11010) |
 
-The flags can be a little late, because each side sees the other pointer two flip-flops after it changed. That is safe: the FIFO may say full or empty for a moment too long, but never the other way round.
+Since pointer information passes through two flip-flops before reaching the other clock domain, the full and empty flags may update slightly later. This is expected in asynchronous FIFO operation.
 
 ---
 
-# 🧪 Testbench and Verification
+## 🧪 Testbench and Verification
 
-The testbench keeps its own copy of every byte the FIFO accepts (mem_cpy) and checks each read against it. Each input is set tsetup (2 ns) before a rising clock edge and held for thold (2 ns) after it, so the FIFO always sees stable values. Reads are checked just before the read edge, because rdata already shows the word that is about to be read.
+I created a self-checking testbench to verify the FIFO operations.
+
+The testbench maintains a separate memory copy called `mem_cpy`. Whenever the FIFO accepts a write operation, the same data is stored in this reference memory.
+
+During a read operation, the actual FIFO output is compared with the expected data in `mem_cpy`.
+
+The testbench also checks whether the FIFO correctly detects its full and empty conditions.
+
+Each input is set `tsetup` (2 ns) before a rising clock edge and held for `thold` (2 ns) after it. Read data is checked just before the read edge because `rdata` already shows the word at the current read pointer.
 
 ### Test Steps
 
@@ -140,15 +158,17 @@ The testbench keeps its own copy of every byte the FIFO accepts (mem_cpy) and ch
 
 | Parameter | Value |
 |---|---|
-| Write clock (wcycle) | 7 ns |
-| Read clock (rcycle) | 11 ns |
-| Setup before the clock edge (tsetup) | 2 ns |
-| Hold after the clock edge (thold) | 2 ns |
+| Write clock (`wcycle`) | 7 ns |
+| Read clock (`rcycle`) | 11 ns |
+| Setup before the clock edge (`tsetup`) | 2 ns |
+| Hold after the clock edge (`thold`) | 2 ns |
 | Data written | 01 to 13 (hex), then EE while full |
 
 ---
 
-# 📊 Results
+## 📊 Results
+
+The FIFO was tested using different write and read operations. The testbench verified the stored data, pointer updates, and full and empty conditions.
 
 | Check | Result |
 |---|---|
@@ -157,9 +177,11 @@ The testbench keeps its own copy of every byte the FIFO accepts (mem_cpy) and ch
 | Extra write while full | Blocked |
 | Read back | 04 to 13 (hex), in order |
 
-### Does the testbench catch real bugs?
+### Fault Injection and Verification
 
-I broke the design on purpose in five ways, and the testbench failed every time.
+To check whether my testbench could detect design errors, I intentionally introduced five different mistakes into the RTL.
+
+I then ran the same testbench on each modified design.
 
 | Broken version | Result |
 |---|---|
@@ -169,23 +191,29 @@ I broke the design on purpose in five ways, and the testbench failed every time.
 | Empty compares binary with Gray | FAIL, 1 error |
 | Write pointer moves even when full | FAIL, 1 error |
 
+All five modified designs were detected by the testbench. This helped me verify that the testbench was checking the actual FIFO behaviour.
+
 ---
 
-# 📉 Simulation
+## 📉 Simulation Results
+
+### FIFO Waveform
 
 ![Waveform](screenshots/fifo_waveform.png)
 
-*Figure 1: Vivado waveform of the full test. The write clock is 7 ns and the read clock is 11 ns.*
+*Figure 1: Vivado waveform showing FIFO operation with a 7 ns write clock and an 11 ns read clock.*
+
+### Simulation Console Output
 
 ![Console, PASS](screenshots/fifo_pass.png)
 
-*Figure 2: Console output, with the pointer values and PASS.*
+*Figure 2: Console output showing pointer values and the final PASS result.*
 
-In simulation the FIFO memory and the testbench copy both start at 0, so after reset nothing in the waveform is red (unknown). Only the first few nanoseconds, before the reset, show red.
+The FIFO memory is not reset, so its contents can be unknown before they are written. The empty flag indicates whether valid data is available to read.
 
 ---
 
-# 📂 Repository Structure
+## 📂 Repository Structure
 
 ```text
 Async FIFO/
@@ -200,31 +228,39 @@ Async FIFO/
 
 ---
 
-# ⚙️ How to Run
+## ⚙️ How to Run
 
 1. Open Xilinx Vivado and create a new project.
-2. Add `Async_fifo.v` as a design source and `self_tb.v` as a simulation source.
-3. Choose Run Simulation, then Run Behavioral Simulation.
-4. Type the following in the Tcl Console to run the test to the end:
+2. Add `Async_fifo.v` as a design source.
+3. Add `self_tb.v` as a simulation source.
+4. Select **Run Simulation → Run Behavioral Simulation**.
+5. Enter the following command in the Tcl Console:
 
 ```text
 run all
 ```
 
----
-
-# 🎓 What I Learned
-
-- Why pointers must cross between clocks in Gray code: one bit changes at a time, so the other side never sees a mixed value.
-- Why two flip-flops: they give a metastable value time to settle.
-- How one extra pointer bit tells full from empty.
-- My first test run read every value one position early. The FIFO was fine; the testbench was sampling a combinational read at the wrong moment. Now my testbench checks rdata just before the read edge.
+6. Check the waveform and simulation console for the verification results.
 
 ---
 
-# 👩‍💻 Author
+## 🎓 What I Learned
 
-Sireesha P
+- How an asynchronous FIFO transfers data between two independent clock domains.
+- How Gray-code conversion helps with safe pointer synchronization.
+- Why two-flop synchronizers are used in CDC circuits.
+- How the extra pointer bit helps distinguish full and empty conditions.
+- How to write a self-checking testbench using a reference memory.
+- How to verify FIFO operation using different clock periods.
+- How fault injection helps check whether a testbench can detect design errors.
+
+One interesting issue I faced during verification was that the testbench initially read every value one position early. After debugging, I found that the issue was related to when the combinational read data was sampled. I corrected the testbench to check `rdata` just before the read edge.
+
+---
+
+## 👩‍💻 Author
+
+**Sireesha P**
 
 Department of Electronics and Communication Engineering
 
