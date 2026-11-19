@@ -122,7 +122,7 @@ The flags can be a little late, because each side sees the other pointer two fli
 
 # 🧪 Testbench and Verification
 
-The testbench keeps its own copy of every byte the FIFO accepts (mem_cpy) and checks each read against it. It drives inputs on the falling edge, so the FIFO always sees stable values on the rising edge.
+The testbench keeps its own copy of every byte the FIFO accepts (mem_cpy) and checks each read against it. Each input is set tsetup (2 ns) before a rising clock edge and held for thold (2 ns) after it, so the FIFO always sees stable values. Reads are checked just before the read edge, because rdata already shows the word that is about to be read.
 
 ### Test Steps
 
@@ -142,7 +142,8 @@ The testbench keeps its own copy of every byte the FIFO accepts (mem_cpy) and ch
 |---|---|
 | Write clock (wcycle) | 7 ns |
 | Read clock (rcycle) | 11 ns |
-| Hold after the clock edge (thold) | 1 ns |
+| Setup before the clock edge (tsetup) | 2 ns |
+| Hold after the clock edge (thold) | 2 ns |
 | Data written | 01 to 13 (hex), then EE while full |
 
 ---
@@ -162,13 +163,11 @@ I broke the design on purpose in five ways, and the testbench failed every time.
 
 | Broken version | Result |
 |---|---|
-| Full compares without flipping the top 2 bits | FAIL, 3 errors |
+| Full compares without flipping the top 2 bits | FAIL, 21 errors |
 | Memory written even when full | FAIL, 1 error |
 | Gray conversion shifted the wrong way | FAIL, 4 errors |
 | Empty compares binary with Gray | FAIL, 1 error |
 | Write pointer moves even when full | FAIL, 1 error |
-
-One honest limit: with only one synchronizer flip-flop instead of two, the simulation still passes. A simulation has no metastability, so it cannot show why the second flip-flop matters. That is something CDC tools and design review check.
 
 ---
 
@@ -182,7 +181,7 @@ One honest limit: with only one synchronizer flip-flop instead of two, the simul
 
 *Figure 2: Console output, with the pointer values and PASS.*
 
-In the waveform, red means the value is unknown (X). The testbench copy shows red because entries it never writes stay X, and rdata is X before the first write because the FIFO memory has no reset. Neither is an error.
+In simulation the FIFO memory and the testbench copy both start at 0, so after reset nothing in the waveform is red (unknown). Only the first few nanoseconds, before the reset, show red.
 
 ---
 
@@ -219,10 +218,9 @@ run all
 - Why pointers must cross between clocks in Gray code: one bit changes at a time, so the other side never sees a mixed value.
 - Why two flip-flops: they give a metastable value time to settle.
 - How one extra pointer bit tells full from empty.
-- My first test run read every value one position early. The FIFO was fine; the testbench was sampling a combinational read at the wrong moment. Since then I drive inputs on the falling edge.
+- My first test run read every value one position early. The FIFO was fine; the testbench was sampling a combinational read at the wrong moment. Now my testbench checks rdata just before the read edge.
 
 ---
-
 
 # 👩‍💻 Author
 
