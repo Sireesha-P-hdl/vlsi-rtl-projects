@@ -16,6 +16,8 @@ module fifo_mem (
     reg [7:0] mem [0:15];
 
     assign rdata = mem[raddr];
+    integer k;
+    initial for (k = 0; k < 16; k = k + 1) mem[k] = 8'd0; 
 
     always @(posedge wclk) begin
         if (wclken)
